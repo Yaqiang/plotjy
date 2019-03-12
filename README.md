@@ -1,5 +1,5 @@
 # plotjy
-Plot package for Jython
+Plot package for Jython, depends on numjy.
 
 Build PlotJy with maven and copy plotjy folder into Lib -> site-packages folder of Jython. Run Jython and import plotjy:
 
