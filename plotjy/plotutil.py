@@ -21,11 +21,11 @@ def getplotdata(data):
             for d in data:
                 v = np.miutil.date2num(d)
                 dd.append(v)
-            return np.array(dd).array
+            return np.array(dd)._array
         else:
-            return np.array(data).array
+            return np.array(data)._array
     else:
-        return np.array([data]).array
+        return np.array([data])._array
         
 def getfont(fontdic, **kwargs):
     basefont = kwargs.pop('basefont', None)
@@ -182,7 +182,8 @@ def getcolormap(**kwargs):
         if cmapstr is None:
             cmapstr = 'matlab_jet'
         fn = cmapstr + '.rgb'
-        fn = os.path.join('./colormaps', fn)
+        cmpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'colormaps')
+        fn = os.path.join(cmpath, fn)
         if not os.path.exists(fn):
             raise IOError('cmap file not exists: %s' % fn)
         alpha = kwargs.pop('alpha', None)

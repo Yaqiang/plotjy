@@ -3042,9 +3042,7 @@ class Axes(object):
                 labelfont = Font(labfontname, Font.PLAIN, labfontsize)    
         else:
             labelfont = plotutil.getfont(labelfontdic)
-        if isinstance(mappable, MILayer):
-            ls = mappable.legend()
-        elif isinstance(mappable, LegendScheme):
+        if isinstance(mappable, LegendScheme):
             ls = mappable
         elif isinstance(mappable, GraphicCollection):
             ls = mappable.getLegendScheme()

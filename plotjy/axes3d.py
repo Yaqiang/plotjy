@@ -428,7 +428,7 @@ class Axes3D(Axes):
         pb.setStyle(pstyle)
         isvalue = False
         if len(c) > 1:
-            if isinstance(c, (np.NDArray, DimArray)):
+            if isinstance(c, np.NDArray):
                 isvalue = True
             elif isinstance(c[0], (int, long, float)):
                 isvalue = True            
