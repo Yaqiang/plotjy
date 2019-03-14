@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import org.meteothink.global.MIMath;
+import org.meteothink.util.GlobalUtil;
 
 /**
  * ColorUtiles class
@@ -263,6 +264,49 @@ public class ColorUtil {
         }
         
         return null;
+    }
+    
+    /**
+     * Get color tables
+     *
+     * @return Color tables
+     * @throws IOException
+     */
+    public static ColorMap[] getColorTables() throws IOException {
+        String fn = GlobalUtil.getAppPath(ColorUtil.class);
+        boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().
+                getInputArguments().toString().contains("jdwp");
+        if (isDebug) {
+            fn = "D:/MyProgram/java/MeteoInfoDev/MeteoInfoMap/";
+        }     
+        fn = fn.substring(0, fn.lastIndexOf("/"));
+        String path = fn + File.separator + "colormaps";
+        File pathDir = new File(path);
+        if (!pathDir.isDirectory()) {
+            return null;
+        }
+
+        File[] files = pathDir.listFiles();
+        List<ColorMap> cts = new ArrayList<>();
+        for (File file : files) {
+            //InputStream is = ColorUtil.class.getResourceAsStream(pdir + "/" + fileName);
+            //System.out.println(file.getAbsolutePath());
+            ColorMap ct = new ColorMap();
+            ct.readFromFile(file);            
+            if (ct.getColorCount() > 0) {
+                String name = file.getName();
+                name = name.substring(0, name.lastIndexOf("."));
+                ct.setName(name);
+                cts.add(ct);
+            }
+        }
+
+        ColorMap[] ncts = new ColorMap[cts.size()];
+        for (int i = 0; i < cts.size(); i++) {
+            ncts[i] = cts.get(i);
+        }
+
+        return ncts;
     }
 
     /**

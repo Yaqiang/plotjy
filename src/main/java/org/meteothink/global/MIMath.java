@@ -20,6 +20,7 @@ import java.util.List;
 import org.meteothink.util.BigDecimalUtil;
 import org.meteothink.shape.PointZ;
 import org.meteothink.shape.Shape;
+import org.meteothink.data.mapdata.Field;
 
 /**
  * MeteoInfo Math class
@@ -183,6 +184,24 @@ public class MIMath {
             return true;
         } catch (NumberFormatException e) {
             return false;
+        }
+    }
+    
+    /**
+     * Determine if a field is numeric
+     *
+     * @param field The field
+     * @return Boolean
+     */
+    public static boolean isNumeric(Field field) {
+        switch (field.getDataType()) {
+            case INT:
+            case FLOAT:
+            case DOUBLE:
+            //case Decimal:
+                return true;
+            default:
+                return false;
         }
     }
 
