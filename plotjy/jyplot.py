@@ -23,6 +23,7 @@ import plotutil
 from figure import Figure
 
 ## Global ##
+figure_parent = None
 batchmode = False
 isinteractive = hasattr(sys, 'ps1')
 g_figure = None
@@ -1069,12 +1070,24 @@ def figure(bgcolor='w', figsize=None, newfig=True):
     return g_figure
         
 def show(newfig=True):
-    form = ChartForm(g_figure)
-    g_figure.paintGraphics()
-    form.setSize(600, 500)
-    form.setLocationRelativeTo(None)
-    form.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
-    form.setVisible(True) 
+    if figure_parent is None:
+        #print 'figure_parent is None'
+        if not batchmode:            
+            form = ChartForm(g_figure)
+            g_figure.paintGraphics()
+            form.setSize(600, 500)
+            form.setLocationRelativeTo(None)
+            form.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
+            form.setVisible(True)     
+    else:
+        #print figure_parent
+        if newfig:
+            figure_parent.addFigure(g_figure)
+        else:
+            if figure_parent.getCurrentFigure() is None:
+                figure_parent.addFigure(g_figure)
+            else:
+                figure_parent.setCurrentFigure(g_figure) 
     
 # Set figure background color
 def bgcolor(color):
@@ -1440,9 +1453,10 @@ def cla():
     global gca
     if not gca is None:
         if not g_figure is None:
-            chart = g_figure.getChart()
-            if not chart is None:
-                g_figure.getChart().removePlot(gca.axes)
+            g_figure.remove_axes(gca)
+            #chart = g_figure.getChart()
+            #if not chart is None:
+            #    g_figure.getChart().removePlot(gca.axes)
         gca = None
         draw_if_interactive()
 
@@ -2807,10 +2821,3 @@ def giffinish(animation):
     :param animation: Gif animation object
     """
     animation.finish()
-        
-def clear():
-    """
-    Clear all variables.
-    """
-    #migl.milapp.delVariables()
-    pass
