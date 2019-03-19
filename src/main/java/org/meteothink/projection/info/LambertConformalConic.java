@@ -15,9 +15,9 @@ package org.meteothink.projection.info;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.meteothink.global.PointD;
-import org.meteothink.projection.KnownCoordinateSystems;
-import org.meteothink.projection.ProjectionNames;
+import org.meteothink.common.PointD;
+import org.meteothink.common.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.ProjectionName;
 import org.meteothink.projection.ProjectionUtil;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.meteothink.shape.PolygonShape;
@@ -49,8 +49,8 @@ public class LambertConformalConic extends ProjectionInfo {
      * @return Projection name
      */
     @Override
-    public ProjectionNames getProjectionName() {
-        return ProjectionNames.Lambert_Conformal_Conic;
+    public ProjectionName getProjectionName() {
+        return ProjectionName.Lambert_Conformal_Conic;
     }
 
     // </editor-fold>

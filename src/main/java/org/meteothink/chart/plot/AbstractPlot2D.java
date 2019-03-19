@@ -30,8 +30,8 @@ import org.meteothink.chart.axis.LogAxis;
 import static org.meteothink.chart.plot.Plot.MINIMUM_HEIGHT_TO_DRAW;
 import static org.meteothink.chart.plot.Plot.MINIMUM_WIDTH_TO_DRAW;
 import org.meteothink.drawing.Draw;
-import org.meteothink.global.Extent;
-import org.meteothink.global.PointF;
+import org.meteothink.common.Extent;
+import org.meteothink.common.PointF;
 
 /**
  *

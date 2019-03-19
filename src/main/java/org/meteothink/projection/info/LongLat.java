@@ -13,7 +13,7 @@
  */
 package org.meteothink.projection.info;
 
-import org.meteothink.projection.ProjectionNames;
+import org.meteothink.common.projection.ProjectionName;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
 
 /**
@@ -39,8 +39,8 @@ public class LongLat extends ProjectionInfo {
      * @return Projection name
      */
     @Override
-    public ProjectionNames getProjectionName() {
-        return ProjectionNames.LongLat;
+    public ProjectionName getProjectionName() {
+        return ProjectionName.LongLat;
     }
     // </editor-fold>
     // <editor-fold desc="Methods">

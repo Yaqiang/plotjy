@@ -13,9 +13,9 @@
  */
 package org.meteothink.layer;
 
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.legend.LegendScheme;
-import org.meteothink.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.shape.ShapeTypes;
 
@@ -51,7 +51,7 @@ public class MapLayer implements Cloneable {
     public MapLayer() {
         _layerName = "layer";
         _fileName = "";
-        _projInfo = KnownCoordinateSystems.geographic.world.WGS1984;
+        _projInfo = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
         _handle = -1;
         _extent = new Extent();
         _visible = true;

@@ -5,7 +5,7 @@
  */
 package org.meteothink.shape;
 
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 import org.meteothink.legend.ChartBreak;
 import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;

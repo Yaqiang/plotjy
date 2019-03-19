@@ -13,8 +13,8 @@
  */
 package org.meteothink.data.mapdata;
 
-import org.meteothink.global.Extent;
-import org.meteothink.global.PointD;
+import org.meteothink.common.Extent;
+import org.meteothink.common.PointD;
 import org.meteothink.io.EndianDataOutputStream;
 import org.meteothink.layer.LayerDrawType;
 import org.meteothink.layer.VectorLayer;
@@ -47,8 +47,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.meteothink.projection.info.ProjectionInfo;
-import org.locationtech.proj4j.CRSFactory;
-import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.meteothink.shape.PointM;
 import org.meteothink.shape.PointZShape;
 import org.meteothink.shape.PolygonMShape;
@@ -715,9 +713,7 @@ public class ShapeFileManage {
         String esriString = buffer.toString();
         sr.close();
 
-        CRSFactory crsFactory = new CRSFactory();        
-        CoordinateReferenceSystem crs = crsFactory.createFromEsriString(esriString);
-        ProjectionInfo projInfo = ProjectionInfo.factory(crs);
+        ProjectionInfo projInfo = ProjectionInfo.factoryESRI(esriString);
         
         return projInfo;
     }

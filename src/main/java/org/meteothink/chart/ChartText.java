@@ -19,7 +19,7 @@ import java.util.List;
 import org.meteothink.chart.plot.XAlign;
 import org.meteothink.chart.plot.YAlign;
 import org.meteothink.drawing.Draw;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.meteothink.shape.Shape;

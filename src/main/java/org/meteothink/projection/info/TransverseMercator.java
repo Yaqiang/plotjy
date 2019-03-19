@@ -15,8 +15,8 @@ package org.meteothink.projection.info;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.meteothink.global.PointD;
-import org.meteothink.projection.ProjectionNames;
+import org.meteothink.common.PointD;
+import org.meteothink.common.projection.ProjectionName;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.meteothink.shape.PolygonShape;
 
@@ -47,8 +47,8 @@ public class TransverseMercator extends ProjectionInfo {
      * @return Projection name
      */
     @Override
-    public ProjectionNames getProjectionName() {
-        return ProjectionNames.Transverse_Mercator;
+    public ProjectionName getProjectionName() {
+        return ProjectionName.Transverse_Mercator;
     }
 
     // </editor-fold>

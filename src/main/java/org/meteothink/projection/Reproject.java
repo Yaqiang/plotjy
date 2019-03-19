@@ -17,11 +17,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.meteothink.projection.info.ProjectionInfo;
-import org.meteothink.global.PointD;
-import org.meteothink.global.Extent;
+import org.meteothink.common.PointD;
+import org.meteothink.common.Extent;
 import org.locationtech.proj4j.CoordinateTransform;
 import org.locationtech.proj4j.CoordinateTransformFactory;
 import org.locationtech.proj4j.ProjCoordinate;
+import org.meteothink.common.projection.ProjectionName;
 import org.meteothink.ndarray.Array;
 import org.meteothink.ndarray.InvalidRangeException;
 import org.meteothink.geoprocess.analysis.ResampleMethods;
@@ -86,8 +87,8 @@ public class Reproject {
      * @param numPoints Point number
      */
     public static void reprojectPoints(double[][] points, ProjectionInfo source, ProjectionInfo dest, int startIndex, int numPoints) {
-        CoordinateTransform trans = ctFactory.createTransform(source.getCoordinateReferenceSystem(), dest.getCoordinateReferenceSystem());
-        if (source.getProjectionName() == ProjectionNames.LongLat) {
+        CoordinateTransform trans = ctFactory.createTransform(source.getCRS(), dest.getCRS());
+        if (source.getProjectionName() == ProjectionName.LongLat) {
             for (int i = startIndex; i < startIndex + numPoints; i++) {
                 if (i >= points.length) {
                     break;

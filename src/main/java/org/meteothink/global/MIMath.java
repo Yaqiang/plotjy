@@ -13,14 +13,20 @@
  */
 package org.meteothink.global;
 
+import org.meteothink.data.mapdata.Field;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import org.meteothink.common.Extent;
+import org.meteothink.common.Extent3D;
+import org.meteothink.common.PointD;
+import org.meteothink.common.PointF;
+import org.meteothink.data.GridData;
+import org.meteothink.data.StationData;
 import org.meteothink.util.BigDecimalUtil;
 import org.meteothink.shape.PointZ;
 import org.meteothink.shape.Shape;
-import org.meteothink.data.mapdata.Field;
 
 /**
  * MeteoInfo Math class
@@ -186,7 +192,7 @@ public class MIMath {
             return false;
         }
     }
-    
+
     /**
      * Determine if a field is numeric
      *
@@ -198,7 +204,7 @@ public class MIMath {
             case INT:
             case FLOAT:
             case DOUBLE:
-            //case Decimal:
+            //case DECIMAL:
                 return true;
             default:
                 return false;
@@ -1222,6 +1228,80 @@ public class MIMath {
         return new double[]{x, y};
     }
     
+    // <editor-fold desc="Wind U/V">
+    /**
+     * Get wind U/V from wind direction/speed
+     *
+     * @param windDir The wind direction
+     * @param windSpeed The wind speed
+     * @return Wind U/V
+     */
+    public static double[] getUVFromDS(double windDir, double windSpeed) {
+        double dir = windDir + 180;
+        if (dir > 360) {
+            dir = dir - 360;
+        }
+
+        dir = dir * Math.PI / 180;
+        double U = windSpeed * Math.sin(dir);
+        double V = windSpeed * Math.cos(dir);
+
+        return new double[]{U, V};
+    }
+
+    /**
+     * Get wind U/V grid data from wind direction/speed grid data
+     *
+     * @param windDirData Wind directoin grid data
+     * @param windSpeedData Wind speed grid data
+     * @return U/V grid data
+     */
+    public static GridData[] getUVFromDS(GridData windDirData, GridData windSpeedData) {
+        GridData uData = new GridData(windDirData);
+        GridData vData = new GridData(windDirData);
+        double[] uv;
+        for (int i = 0; i < windDirData.getYNum(); i++) {
+            for (int j = 0; j < windDirData.getXNum(); j++) {
+                if (MIMath.doubleEquals(windDirData.data[i][j], windDirData.missingValue)
+                        || MIMath.doubleEquals(windSpeedData.data[i][j], windSpeedData.missingValue)) {
+                    uData.data[i][j] = uData.missingValue;
+                    vData.data[i][j] = vData.missingValue;
+                } else {
+                    uv = getUVFromDS(windDirData.data[i][j], windSpeedData.data[i][j]);
+                    uData.data[i][j] = uv[0];
+                    vData.data[i][j] = uv[1];
+                }
+            }
+        }
+
+        return new GridData[]{uData, vData};
+    }
+
+    /**
+     * Get wind U/V station data from wind direction/speed station data
+     *
+     * @param windDirData Wind direction station data
+     * @param windSpeedData Wind speed station data
+     * @return U/V station data
+     */
+    public static StationData[] getUVFromDS(StationData windDirData, StationData windSpeedData) {
+        StationData uData = new StationData(windDirData);
+        StationData vData = new StationData(windSpeedData);
+        double[] uv;
+        for (int i = 0; i < windDirData.getStNum(); i++) {
+            if (MIMath.doubleEquals(windDirData.data[i][2], windDirData.missingValue)
+                    || MIMath.doubleEquals(windSpeedData.data[i][2], windSpeedData.missingValue)) {
+                uData.data[i][2] = uData.missingValue;
+                vData.data[i][2] = vData.missingValue;
+            } else {
+                uv = getUVFromDS(windDirData.data[i][2], windSpeedData.data[i][2]);
+                uData.data[i][2] = uv[0];
+                vData.data[i][2] = uv[1];
+            }
+        }
+        return new StationData[]{uData, vData};
+    }
+
     /**
      * Get wind direction/speed from U/V
      *
@@ -1253,23 +1333,57 @@ public class MIMath {
     }
     
     /**
-     * Get wind U/V from wind direction/speed
+     * Get wind direction/speed grid data from wind U/V grid data
      *
-     * @param windDir The wind direction
-     * @param windSpeed The wind speed
-     * @return Wind U/V
+     * @param uData U grid data
+     * @param vData V grid data
+     * @return Wind direction/speed grid data
      */
-    public static double[] getUVFromDS(double windDir, double windSpeed) {
-        double dir = windDir + 180;
-        if (dir > 360) {
-            dir = dir - 360;
+    public static GridData[] getDSFromUV(GridData uData, GridData vData) {
+        GridData windDirData = new GridData(uData);
+        GridData windSpeedData = new GridData(uData);
+        double[] ds;
+        for (int i = 0; i < uData.getYNum(); i++) {
+            for (int j = 0; j < uData.getXNum(); j++) {
+                if (MIMath.doubleEquals(uData.data[i][j], uData.missingValue)
+                        || MIMath.doubleEquals(vData.data[i][j], vData.missingValue)) {
+                    windDirData.data[i][j] = windDirData.missingValue;
+                    windSpeedData.data[i][j] = windSpeedData.missingValue;
+                } else {
+                    ds = getDSFromUV(uData.data[i][j], vData.data[i][j]);
+                    windDirData.data[i][j] = ds[0];
+                    windSpeedData.data[i][j] = ds[1];
+                }
+            }
         }
 
-        dir = dir * Math.PI / 180;
-        double U = windSpeed * Math.sin(dir);
-        double V = windSpeed * Math.cos(dir);
+        return new GridData[]{windDirData, windSpeedData};
+    }
 
-        return new double[]{U, V};
+    /**
+     * Get wind direction/speed station data from wind U/V station data
+     *
+     * @param uData U station data
+     * @param vData V station data
+     * @return Wind direction/speed station data
+     */
+    public static StationData[] getDSFromUV(StationData uData, StationData vData) {
+        StationData windDirData = new StationData(uData);
+        StationData windSpeedData = new StationData(vData);
+        double[] ds;
+        for (int i = 0; i < windDirData.getStNum(); i++) {
+            if (MIMath.doubleEquals(uData.data[i][2], uData.missingValue)
+                    || MIMath.doubleEquals(vData.data[i][2], vData.missingValue)) {
+                windDirData.data[i][2] = windDirData.missingValue;
+                windSpeedData.data[i][2] = windSpeedData.missingValue;
+            } else {
+                ds = getDSFromUV(uData.data[i][2], vData.data[i][2]);
+                windDirData.data[i][2] = ds[0];
+                windSpeedData.data[i][2] = ds[1];
+            }
+        }
+
+        return new StationData[]{windDirData, windSpeedData};
     }
     
     /**
@@ -1286,4 +1400,5 @@ public class MIMath {
         r[1] += y;
         return r;
     }
+    // </editor-fold>
 }

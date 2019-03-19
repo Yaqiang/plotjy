@@ -4,7 +4,7 @@ from org.meteothink.chart import ChartPanel, Chart, Location, MouseMode, ChartTe
 
 import plotutil
 from axes import Axes, PolarAxes
-#from mapaxes import MapAxes
+from mapaxes import MapAxes
 from axes3d import Axes3D
 
 from java.awt import Font

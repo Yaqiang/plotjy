@@ -35,7 +35,7 @@ import org.meteothink.data.mapdata.geotiff.compression.LZWCompression;
 import org.meteothink.math.ArrayMath;
 import org.meteothink.util.DataConvert;
 import org.meteothink.util.BigDecimalUtil;
-import org.meteothink.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.ndarray.Array;
 import org.meteothink.ndarray.DataType;
@@ -659,7 +659,7 @@ public class GeoTiff {
             if (projStr != null) {
                 gData.projInfo = ProjectionInfo.factory(projStr);
             } else {
-                gData.projInfo = KnownCoordinateSystems.geographic.world.WGS1984;
+                gData.projInfo = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
             }
 
             return gData;
@@ -717,7 +717,7 @@ public class GeoTiff {
             if (projStr != null) {
                 gData.projInfo = ProjectionInfo.factory(projStr);
             } else {
-                gData.projInfo = KnownCoordinateSystems.geographic.world.WGS1984;
+                gData.projInfo = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
             }
 
             return gData;
@@ -767,7 +767,7 @@ public class GeoTiff {
         if (projStr != null) {
             return ProjectionInfo.factory(projStr);
         } else {
-            return KnownCoordinateSystems.geographic.world.WGS1984;
+            return ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
         }
     }
 

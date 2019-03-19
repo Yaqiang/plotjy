@@ -13,13 +13,12 @@
  */
 package org.meteothink.data.mapdata;
 
-import org.meteothink.data.GridData;
 import org.meteothink.data.mapdata.geotiff.GeoTiff;
 import org.meteothink.data.meteodata.DrawMeteoData;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.util.GlobalUtil;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 import org.meteothink.ndarray.DataType;
 import org.meteothink.layer.ImageLayer;
 import org.meteothink.layer.LayerDrawType;
@@ -49,14 +48,8 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import org.meteothink.data.GridArray;
-import org.meteothink.data.meteodata.ascii.ASCIIGridDataInfo;
-import org.meteothink.data.meteodata.ascii.SurferGridDataInfo;
-import org.meteothink.data.meteodata.bandraster.BILDataInfo;
 import org.meteothink.util.DataConvert;
 import org.meteothink.layer.RasterLayer;
-import org.meteothink.legend.LegendScheme;
-import org.meteothink.legend.LegendType;
-import org.meteothink.projection.KnownCoordinateSystems;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.shape.PointShape;
 import org.meteothink.shape.PolygonShape;
@@ -64,7 +57,6 @@ import org.meteothink.shape.Shape;
 import static org.meteothink.shape.ShapeTypes.Point;
 import static org.meteothink.shape.ShapeTypes.Polygon;
 import static org.meteothink.shape.ShapeTypes.Polyline;
-import org.meteothink.ndarray.Array;
 
 /**
  *
@@ -151,16 +143,7 @@ public class MapDataManage {
                 break;
             case GEO_TIFF:
                 aLayer = readGeoTiffFile(aFile);
-                break;
-            case BIL:
-                aLayer = readBILFile(aFile);
-                break;
-            case ESRI_ASCII_GRID:
-                aLayer = readESRI_ASCII_GRID(aFile);
-                break;
-            case SURFER_ASCII_GRID:
-                aLayer = readSurfer_ASCII_GRID(aFile);
-                break;
+                break;            
             case GRADS:
                 aLayer = readMapFile_GrADS(aFile);
                 break;
@@ -390,65 +373,6 @@ public class MapDataManage {
             Logger.getLogger(MapDataManage.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
-    }
-
-    /**
-     * Read BIL file and create a raster layer
-     *
-     * @param fileName BIL file name
-     * @return Raster layer
-     */
-    public static RasterLayer readBILFile(String fileName) {
-        BILDataInfo dataInfo = new BILDataInfo();
-        dataInfo.readDataInfo(fileName);
-        //GridData gData = dataInfo.getGridData_LonLat(0, 0, 0);
-        Array a = dataInfo.read(dataInfo.getVariableNames().get(0));
-        GridArray data = new GridArray();
-        data.data = a;
-        data.xArray = dataInfo.getXDimension().getValues();
-        data.yArray = dataInfo.getYDimension().getValues();
-        data.missingValue = dataInfo.getMissingValue();
-        LegendScheme aLS = LegendManage.createLegendSchemeFromGridData(data, LegendType.GraduatedColor,
-                ShapeTypes.Image);
-        RasterLayer aLayer = DrawMeteoData.createRasterLayer(data, new File(fileName).getName(), aLS);
-        aLayer.setFileName(fileName);
-
-        return aLayer;
-    }
-
-    /**
-     * Read ESRI ASCII grid file and create a raster layer
-     *
-     * @param fileName File name
-     * @return Raster layer
-     */
-    public static RasterLayer readESRI_ASCII_GRID(String fileName) {
-        ASCIIGridDataInfo dataInfo = new ASCIIGridDataInfo();
-        dataInfo.readDataInfo(fileName);
-        GridArray gData = dataInfo.getGridArray("var");
-        RasterLayer aLayer = DrawMeteoData.createRasterLayer(gData, new File(fileName).getName());
-        aLayer.setProjInfo(KnownCoordinateSystems.geographic.world.WGS1984);
-        aLayer.setFileName(fileName);
-
-        return aLayer;
-    }
-
-    /**
-     * Read surfer ASCII grid file and create a raster layer
-     *
-     * @param fileName File name
-     * @return Raster layer
-     */
-    public static RasterLayer readSurfer_ASCII_GRID(String fileName) {
-        SurferGridDataInfo dataInfo = new SurferGridDataInfo();
-        dataInfo.readDataInfo(fileName);
-        GridData gData = dataInfo.getGridData_LonLat(0, 0, 0);
-        LegendScheme aLS = LegendManage.createLegendSchemeFromGridData(gData, LegendType.GraduatedColor,
-                ShapeTypes.Image);
-        RasterLayer aLayer = DrawMeteoData.createRasterLayer(gData, new File(fileName).getName(), aLS);
-        aLayer.setFileName(fileName);
-
-        return aLayer;
     }
 
     /**

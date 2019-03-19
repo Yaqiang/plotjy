@@ -13,7 +13,7 @@
  */
 package org.meteothink.shape;
 
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 
 /**
  * Cloud coverage class

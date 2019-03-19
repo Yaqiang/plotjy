@@ -14,8 +14,8 @@
 package org.meteothink.projection.info;
 
 import java.util.List;
-import org.meteothink.global.PointD;
-import org.meteothink.projection.ProjectionNames;
+import org.meteothink.common.PointD;
+import org.meteothink.common.projection.ProjectionName;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.meteothink.shape.PolygonShape;
 
@@ -45,8 +45,8 @@ public class OrthographicAzimuthal extends ProjectionInfo {
      * @return Projection name
      */
     @Override
-    public ProjectionNames getProjectionName() {
-        return ProjectionNames.Orthographic_Azimuthal;
+    public ProjectionName getProjectionName() {
+        return ProjectionName.Orthographic_Azimuthal;
     }
 
     // </editor-fold>

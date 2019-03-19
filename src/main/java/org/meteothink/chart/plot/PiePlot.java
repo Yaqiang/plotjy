@@ -12,7 +12,7 @@ import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import org.meteothink.drawing.Draw;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import org.meteothink.legend.ColorBreak;
 import org.meteothink.legend.PolygonBreak;
 import org.meteothink.shape.ArcShape;

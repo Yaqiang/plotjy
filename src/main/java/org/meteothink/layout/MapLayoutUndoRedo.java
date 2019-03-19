@@ -9,7 +9,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.undo.AbstractUndoableEdit;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 
 /**
  *

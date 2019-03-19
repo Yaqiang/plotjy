@@ -16,7 +16,7 @@ package org.meteothink.layout;
 import org.meteothink.drawing.Draw;
 import org.meteothink.global.event.IMapViewUpdatedListener;
 import org.meteothink.global.event.MapViewUpdatedEvent;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import org.meteothink.layer.LayerDrawType;
 import org.meteothink.layer.LayerTypes;
 import org.meteothink.layer.MapLayer;

@@ -16,7 +16,7 @@ package org.meteothink.shape;
 import org.meteothink.util.MIMath;
 import java.util.ArrayList;
 import java.util.List;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateXYZM;
 import org.locationtech.jts.geom.Geometry;

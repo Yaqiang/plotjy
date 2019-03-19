@@ -8,7 +8,8 @@ from org.meteothink.chart.axis import Axis, LonLatAxis, TimeAxis, LogAxis
 from org.meteothink.legend import LegendManage, BarBreak, PolygonBreak, PolylineBreak, \
     PointBreak, LineStyles, PointStyle, LegendScheme, LegendType
 from org.meteothink.shape import ShapeTypes, Graphic, GraphicCollection
-from org.meteothink.global import MIMath, Extent
+from org.meteothink.global import MIMath
+from org.meteothink.common import Extent
 
 from java.awt import Font, Color
 from java.awt.image import BufferedImage
@@ -17,7 +18,9 @@ import numbers
 import datetime
 
 import numjy as np
+from numjy.core.dimarray import DimArray
 import plotutil
+from geolib.milayer import MILayer
 
 class Axes(object):
     '''
@@ -1963,14 +1966,14 @@ class Axes(object):
         elif X.ndim > 2:
             isrgb = True
         else:
-            gdata = np.asgridarray(X)
+            gdata = X
             if isinstance(X, DimArray):
-                if X.islondim(1):
-                    xaxistype = 'lon'
-                elif X.islatdim(1):
-                    xaxistype = 'lat'
-                elif X.istimedim(1):
-                    xaxistype = 'time'
+                xdata = X.dimvalue(1)
+                ydata = X.dimvalue(0)
+            else:
+                xdata = np.arange(X.shape[1])
+                ydata = np.arange(X.shape[0])
+            extent = [xdata[0],xdata[-1],ydata[0],ydata[-1]]
         args = args[1:]   
         
         extent = kwargs.pop('extent', extent)
@@ -1994,17 +1997,17 @@ class Axes(object):
                     level_arg = args[0]
                     if isinstance(level_arg, int):
                         cn = level_arg
-                        ls = LegendManage.createImageLegend(gdata, cn, cmap)
+                        ls = LegendManage.createImageLegend(gdata._array, cn, cmap)
                     else:
                         if isinstance(level_arg, np.NDArray):
                             level_arg = level_arg.aslist()
-                        ls = LegendManage.createImageLegend(gdata, level_arg, cmap)
+                        ls = LegendManage.createImageLegend(gdata._array, level_arg, cmap)
                 else:
                     ls = plotutil.getlegendscheme(args, gdata.min(), gdata.max(), **kwargs)
                 ls = ls.convertTo(ShapeTypes.Image)
                 plotutil.setlegendscheme(ls, **kwargs)
                 
-            igraphic = GraphicFactory.createImage(gdata, ls, extent)
+            igraphic = GraphicFactory.createImage(gdata._array, ls, extent)
         interpolation = kwargs.pop('interpolation', None)
         if not interpolation is None:
             igraphic.getShape().setInterpolation(interpolation)
@@ -3042,7 +3045,10 @@ class Axes(object):
                 labelfont = Font(labfontname, Font.PLAIN, labfontsize)    
         else:
             labelfont = plotutil.getfont(labelfontdic)
-        if isinstance(mappable, LegendScheme):
+        
+        if isinstance(mappable, MILayer):
+            ls = mappable.legend()
+        elif isinstance(mappable, LegendScheme):
             ls = mappable
         elif isinstance(mappable, GraphicCollection):
             ls = mappable.getLegendScheme()

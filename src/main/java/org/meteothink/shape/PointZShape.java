@@ -14,8 +14,8 @@
  */
 package org.meteothink.shape;
 
-import org.meteothink.global.Extent3D;
-import org.meteothink.global.PointD;
+import org.meteothink.common.Extent3D;
+import org.meteothink.common.PointD;
 import org.locationtech.jts.geom.CoordinateXYZM;
 import org.locationtech.jts.geom.Geometry;
 

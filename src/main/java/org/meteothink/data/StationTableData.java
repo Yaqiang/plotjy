@@ -15,7 +15,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import org.meteothink.global.util.GlobalUtil;
 import org.meteothink.ndarray.DataType;
-import org.meteothink.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.table.TableData;
 
@@ -35,7 +35,7 @@ public class StationTableData extends TableData{
      * Constructor
      */
     public StationTableData(){
-        this.projInfo = KnownCoordinateSystems.geographic.world.WGS1984;
+        this.projInfo = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
         stIdx = 0;
         lonIdx = 1;
         latIdx = 2;

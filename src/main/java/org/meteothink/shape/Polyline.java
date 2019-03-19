@@ -14,10 +14,10 @@
  */
 package org.meteothink.shape;
 
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointD;
+import org.meteothink.common.PointF;
 import java.util.ArrayList;
 import java.util.List;
 

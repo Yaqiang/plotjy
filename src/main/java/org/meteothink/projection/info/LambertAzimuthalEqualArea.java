@@ -14,11 +14,11 @@
 package org.meteothink.projection.info;
 
 import java.util.List;
-import org.meteothink.global.PointD;
-import org.meteothink.projection.KnownCoordinateSystems;
-import org.meteothink.projection.ProjectionNames;
-import org.meteothink.projection.Reproject;
+import org.meteothink.common.PointD;
+import org.meteothink.common.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.ProjectionName;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
+import org.meteothink.common.projection.ProjUtil;
 import org.meteothink.shape.PolygonShape;
 
 /**
@@ -47,8 +47,8 @@ public class LambertAzimuthalEqualArea extends ProjectionInfo {
      * @return Projection name
      */
     @Override
-    public ProjectionNames getProjectionName() {
-        return ProjectionNames.Lambert_Azimuthal_Equal_Area;
+    public ProjectionName getProjectionName() {
+        return ProjectionName.Lambert_Azimuthal_Equal_Area;
     }
 
     // </editor-fold>
@@ -64,7 +64,7 @@ public class LambertAzimuthalEqualArea extends ProjectionInfo {
         if (sign == 0)
             sign = 1;
         double lat = -cenLat + sign * 0.01;        
-        PointD p = Reproject.reprojectPoint(lon, lat, KnownCoordinateSystems.geographic.world.WGS1984, this);
+        PointD p = ProjUtil.reprojectPoint(lon, lat, KnownCoordinateSystems.geographic.world.WGS1984, this.crs);
         double x = p.X;
         double max_y = p.Y;
         double easting = this.crs.getProjection().getFalseEasting();

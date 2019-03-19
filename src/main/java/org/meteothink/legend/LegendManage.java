@@ -30,6 +30,8 @@ import org.meteothink.util.BigDecimalUtil;
 import org.meteothink.util.DataConvert;
 import org.meteothink.global.colors.ColorMap;
 import org.meteothink.layer.VectorLayer;
+import org.meteothink.math.ArrayMath;
+import org.meteothink.ndarray.Array;
 import org.meteothink.shape.PointShape;
 import org.meteothink.shape.PolygonShape;
 import org.meteothink.shape.PolylineShape;
@@ -1439,6 +1441,22 @@ public class LegendManage {
         } else {
             ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), cmap);
         }
+
+        return ls;
+    }
+    
+    /**
+     * Create image legend from grid data
+     *
+     * @param gdata Grid data
+     * @param n Legend break number
+     * @param cmap Color map
+     * @return Legend scheme
+     */
+    public static LegendScheme createImageLegend(Array gdata, int n, ColorMap cmap) {
+        LegendScheme ls;
+        ls = LegendManage.createLegendScheme(ArrayMath.min(gdata), ArrayMath.max(gdata), n, cmap, 
+             LegendType.GraduatedColor, ShapeTypes.Image, false, Double.NaN);
 
         return ls;
     }

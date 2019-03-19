@@ -19,7 +19,7 @@ import org.meteothink.drawing.Draw;
 import org.meteothink.legend.PointStyle;
 import org.meteothink.geoprocess.GeoComputation;
 import org.meteothink.global.colors.ColorUtil;
-import org.meteothink.global.Direction;
+import org.meteothink.common.Direction;
 import org.meteothink.global.event.GraphicSelectedEvent;
 import org.meteothink.global.event.IGraphicSelectedListener;
 import org.meteothink.global.event.ILayersUpdatedListener;
@@ -28,13 +28,13 @@ import org.meteothink.global.event.IViewExtentChangedListener;
 import org.meteothink.global.event.LayersUpdatedEvent;
 import org.meteothink.global.event.ProjectionChangedEvent;
 import org.meteothink.global.event.ViewExtentChangedEvent;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.FrmMeasurement;
 import org.meteothink.global.FrmMeasurement.MeasureTypes;
 import org.meteothink.global.util.GlobalUtil;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointD;
+import org.meteothink.common.PointF;
 import org.meteothink.ndarray.DataType;
 import org.meteothink.layer.ChartSet;
 import org.meteothink.layer.ImageLayer;
@@ -62,9 +62,9 @@ import org.meteothink.legend.LineStyles;
 import org.meteothink.legend.PointBreak;
 import org.meteothink.legend.PolygonBreak;
 import org.meteothink.legend.PolylineBreak;
-import org.meteothink.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.projection.info.ProjectionInfo;
-import org.meteothink.projection.ProjectionNames;
+import org.meteothink.common.projection.ProjectionName;
 import org.meteothink.shape.CircleShape;
 import org.meteothink.shape.CurveLineShape;
 import org.meteothink.shape.CurvePolygonShape;
@@ -154,6 +154,7 @@ import org.freehep.graphics2d.VectorGraphics;
 import org.freehep.graphicsio.emf.EMFGraphics2D;
 import org.freehep.graphicsio.pdf.PDFGraphics2D;
 import org.freehep.graphicsio.ps.PSGraphics2D;
+import org.meteothink.common.projection.ProjUtil;
 import org.meteothink.data.mapdata.webmap.GeoPosition;
 import org.meteothink.data.mapdata.webmap.IWebMapPanel;
 import org.meteothink.data.mapdata.webmap.Tile;
@@ -1517,14 +1518,14 @@ public class MapView extends JPanel implements IWebMapPanel {
                                                             }
                                                         } else {
                                                             value = ((PolylineShape) aShape).getLength();
-                                                            value *= _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                                            value *= _projection.getProjInfo().getCRS().getProjection().getFromMetres();
                                                             if (((PolylineShape) aShape).isClosed()) {
                                                                 areaValue = GeoComputation.getArea((List<PointD>) aShape.getPoints());
                                                             }
                                                         }
                                                         if (((PolylineShape) aShape).isClosed()) {
-                                                            areaValue *= _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres()
-                                                                    * _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                                            areaValue *= _projection.getProjInfo().getCRS().getProjection().getFromMetres()
+                                                                    * _projection.getProjInfo().getCRS().getProjection().getFromMetres();
                                                             _frmMeasure.setAreaValue(areaValue);
                                                         }
                                                         break;
@@ -1537,8 +1538,8 @@ public class MapView extends JPanel implements IWebMapPanel {
                                                         } else {
                                                             value = ((PolygonShape) aShape).getArea();
                                                         }
-                                                        value *= _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres()
-                                                                * _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                                        value *= _projection.getProjInfo().getCRS().getProjection().getFromMetres()
+                                                                * _projection.getProjInfo().getCRS().getProjection().getFromMetres();
                                                         break;
                                                 }
                                                 _frmMeasure.setCurrentValue(value);
@@ -1912,7 +1913,7 @@ public class MapView extends JPanel implements IWebMapPanel {
                                         dist = dist * 111319.5;
                                     } else {
                                         dist = Math.sqrt(dx * dx + dy * dy);
-                                        dist *= _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                        dist *= _projection.getProjInfo().getCRS().getProjection().getFromMetres();
                                     }
 
                                     _frmMeasure.setCurrentValue(dist);
@@ -1926,8 +1927,8 @@ public class MapView extends JPanel implements IWebMapPanel {
                                     if (_projection.isLonLatMap()) {
                                         area = area * 111319.5 * 111319.5;
                                     } else {
-                                        area *= _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres()
-                                                * _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                        area *= _projection.getProjInfo().getCRS().getProjection().getFromMetres()
+                                                * _projection.getProjInfo().getCRS().getProjection().getFromMetres();
                                     }
                                     _frmMeasure.setCurrentValue(area);
                                 }
@@ -3432,11 +3433,11 @@ public class MapView extends JPanel implements IWebMapPanel {
         handle = getNewLayerHandle();
         aLayer.setHandle(handle);
         ProjectionInfo aProjInfo = aLayer.getProjInfo();
-        ProjectionInfo GeoProjInfo = KnownCoordinateSystems.geographic.world.WGS1984;
+        ProjectionInfo GeoProjInfo = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
 
         if (!aLayer.getProjInfo().equals(_projection.getProjInfo())) {
             if (EarthWind) {
-                if (aProjInfo.getProjectionName() == ProjectionNames.LongLat) {
+                if (aProjInfo.getProjectionName() == ProjectionName.LongLat) {
                     ProjectionUtil.projectLayer(aLayer, _projection.getProjInfo());
                 } else {
                     ProjectionUtil.projectWindLayer(aLayer, _projection.getProjInfo(), false);
@@ -5829,10 +5830,10 @@ public class MapView extends JPanel implements IWebMapPanel {
         double maxy = center.getY() + height / 2;
         GeoPosition pos1 = GeoUtil.getPosition(new Point2D.Double(minx, miny), zoom, layer.getTileFactory().getInfo());
         GeoPosition pos2 = GeoUtil.getPosition(new Point2D.Double(maxx, maxy), zoom, layer.getTileFactory().getInfo());
-        PointD p1 = Reproject.reprojectPoint(new PointD(pos1.getLongitude(), pos1.getLatitude()),
-                KnownCoordinateSystems.geographic.world.WGS1984, this.getProjection().getProjInfo());
-        PointD p2 = Reproject.reprojectPoint(new PointD(pos2.getLongitude(), pos2.getLatitude()),
-                KnownCoordinateSystems.geographic.world.WGS1984, this.getProjection().getProjInfo());
+        PointD p1 = ProjUtil.reprojectPoint(new PointD(pos1.getLongitude(), pos1.getLatitude()),
+                KnownCoordinateSystems.geographic.world.WGS1984, this.getProjection().getProjInfo().getCRS());
+        PointD p2 = ProjUtil.reprojectPoint(new PointD(pos2.getLongitude(), pos2.getLatitude()),
+                KnownCoordinateSystems.geographic.world.WGS1984, this.getProjection().getProjInfo().getCRS());
         if (pos2.getLongitude() - pos1.getLongitude() < 360.0) {
             double xlen = p2.X - p1.X;
 //        if (pos2.getLongitude() - pos1.getLongitude() > 360)
@@ -6917,7 +6918,7 @@ public class MapView extends JPanel implements IWebMapPanel {
                                         continue;
                                     }
 
-                                    if (MIMath.lonDistance(aGL.getValue(), (float) _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getProjectionLongitudeDegrees()) > 60) {
+                                    if (MIMath.lonDistance(aGL.getValue(), (float) _projection.getProjInfo().getCRS().getProjection().getProjectionLongitudeDegrees()) > 60) {
                                         if (aGL.getCoord().X < 0) {
                                             aGL.setLabDirection(Direction.Weast);
                                         } else {
@@ -6942,7 +6943,7 @@ public class MapView extends JPanel implements IWebMapPanel {
                                         continue;
                                     }
 
-                                    if (MIMath.lonDistance(aGL.getValue(), (float) _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getProjectionLongitudeDegrees()) > 60) {
+                                    if (MIMath.lonDistance(aGL.getValue(), (float) _projection.getProjInfo().getCRS().getProjection().getProjectionLongitudeDegrees()) > 60) {
                                         if (aGL.getCoord().X < 0) {
                                             aGL.setLabDirection(Direction.Weast);
                                         } else {
@@ -6977,9 +6978,9 @@ public class MapView extends JPanel implements IWebMapPanel {
                                         continue;
                                     }
 
-                                    refLon = (float) _projection.getProjInfo().getCoordinateReferenceSystem().getProjection().getProjectionLongitudeDegrees();
+                                    refLon = (float) _projection.getProjInfo().getCRS().getProjection().getProjectionLongitudeDegrees();
                                     if (MIMath.lonDistance(aGL.getValue(), refLon) < 45) {
-                                        if (_projection.getProjInfo().getProjectionName() == ProjectionNames.North_Polar_Stereographic_Azimuthal) {
+                                        if (_projection.getProjInfo().getProjectionName() == ProjectionName.North_Polar_Stereographic_Azimuthal) {
                                             aGL.setLabDirection(Direction.South);
                                         } else {
                                             aGL.setLabDirection(Direction.North);
@@ -6987,7 +6988,7 @@ public class MapView extends JPanel implements IWebMapPanel {
                                     } else {
                                         refLon = MIMath.lonAdd(refLon, 180);
                                         if (MIMath.lonDistance(aGL.getValue(), refLon) < 45) {
-                                            if (_projection.getProjInfo().getProjectionName() == ProjectionNames.North_Polar_Stereographic_Azimuthal) {
+                                            if (_projection.getProjInfo().getProjectionName() == ProjectionName.North_Polar_Stereographic_Azimuthal) {
                                                 aGL.setLabDirection(Direction.North);
                                             } else {
                                                 aGL.setLabDirection(Direction.South);
@@ -7143,7 +7144,7 @@ public class MapView extends JPanel implements IWebMapPanel {
             screenX = sxy[0];
             screenY = sxy[1];
         } else {
-            ProjectionInfo fromProj = KnownCoordinateSystems.geographic.world.WGS1984;
+            ProjectionInfo fromProj = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
             ProjectionInfo toProj = _projection.getProjInfo();
             double[][] points = new double[1][];
             points[0] = new double[]{lon, lat};
@@ -7628,7 +7629,7 @@ public class MapView extends JPanel implements IWebMapPanel {
      */
     public PointD getGeoCenter() {
         PointD viewCenter = this.getViewCenter();
-        return Reproject.reprojectPoint(viewCenter, this.getProjection().getProjInfo(),
+        return ProjUtil.reprojectPoint(viewCenter, this.getProjection().getProjInfo().getCRS(),
                 KnownCoordinateSystems.geographic.world.WGS1984);
     }
 
@@ -9230,7 +9231,7 @@ public class MapView extends JPanel implements IWebMapPanel {
             _projection.setProjStr(Projection.getAttributes().getNamedItem("ProjStr").getNodeValue());
             //_projection.setRefLon(Double.parseDouble(Projection.getAttributes().getNamedItem("RefLon").getNodeValue()));
             //_projection.setRefCutLon(Double.parseDouble(Projection.getAttributes().getNamedItem("RefCutLon").getNodeValue()));
-            if (!(_projection.getProjInfo().getProjectionName() == ProjectionNames.LongLat)) {
+            if (!(_projection.getProjInfo().getProjectionName() == ProjectionName.LongLat)) {
                 //ProjectionInfo fromProj = KnownCoordinateSystems.geographic.world.WGS1984;
                 ProjectionInfo toProj = ProjectionInfo.factory(_projection.getProjStr());
                 projectLayers(toProj);

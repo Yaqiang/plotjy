@@ -13,7 +13,7 @@ import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import org.meteothink.drawing.Draw;
 import org.meteothink.util.DataConvert;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import org.meteothink.legend.ArrowBreak;
 import org.meteothink.shape.GraphicCollection;
 import org.meteothink.shape.WindArrow;

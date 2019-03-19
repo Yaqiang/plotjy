@@ -15,9 +15,9 @@ package org.meteothink.data;
 
 import java.io.BufferedReader;
 import org.meteothink.geoprocess.GeoComputation;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -32,13 +32,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.meteothink.data.meteodata.Dimension;
-import org.meteothink.data.meteodata.DimensionType;
+import org.meteothink.ndarray.Dimension;
+import org.meteothink.ndarray.DimensionType;
 import org.meteothink.data.meteodata.GridDataSetting;
 import org.meteothink.geoprocess.analysis.ResampleMethods;
 import org.meteothink.util.DataConvert;
 import org.meteothink.layer.VectorLayer;
-import org.meteothink.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.projection.ProjectionUtil;
 import org.meteothink.projection.Reproject;
@@ -209,7 +209,7 @@ public class GridData {
         }
 
         this.missingValue = missingValue.doubleValue();
-        this.projInfo = KnownCoordinateSystems.geographic.world.WGS1984;;
+        this.projInfo = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
     }
     // </editor-fold>
     // <editor-fold desc="Get Set Methods">

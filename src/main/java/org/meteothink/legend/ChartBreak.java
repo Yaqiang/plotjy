@@ -15,8 +15,8 @@ package org.meteothink.legend;
 
 import java.awt.Color;
 import java.awt.Font;
-import org.meteothink.global.Extent;
-import org.meteothink.global.PointF;
+import org.meteothink.common.Extent;
+import org.meteothink.common.PointF;
 import org.meteothink.shape.ShapeTypes;
 import java.util.ArrayList;
 import java.util.Collections;

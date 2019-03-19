@@ -4,7 +4,7 @@
  */
 package org.meteothink.legend;
 
-import org.meteothink.global.GenericFileFilter;
+import org.meteothink.common.GenericFileFilter;
 import org.meteothink.shape.ShapeTypes;
 import java.awt.Color;
 import java.io.File;

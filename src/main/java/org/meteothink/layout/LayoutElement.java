@@ -17,7 +17,7 @@ import org.meteothink.global.event.ILocationChangedListener;
 import org.meteothink.global.event.ISizeChangedListener;
 import org.meteothink.global.event.LocationChangedEvent;
 import org.meteothink.global.event.SizeChangedEvent;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;

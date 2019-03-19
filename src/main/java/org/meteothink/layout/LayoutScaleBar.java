@@ -16,7 +16,7 @@ package org.meteothink.layout;
 import com.l2fprod.common.beans.BaseBeanInfo;
 import com.l2fprod.common.beans.ExtendedPropertyDescriptor;
 import com.l2fprod.common.beans.editor.ComboBoxPropertyEditor;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;

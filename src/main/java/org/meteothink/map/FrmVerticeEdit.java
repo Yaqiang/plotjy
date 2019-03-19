@@ -5,7 +5,7 @@
  */
 package org.meteothink.map;
 
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 
 /**
  *

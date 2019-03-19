@@ -30,11 +30,11 @@ import org.meteothink.data.Dataset;
 import org.meteothink.data.mapdata.webmap.IWebMapPanel;
 import org.meteothink.data.mapdata.webmap.TileLoadListener;
 import org.meteothink.drawing.Draw;
-import org.meteothink.global.Direction;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Direction;
+import org.meteothink.common.Extent;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointD;
+import org.meteothink.common.PointF;
 import org.meteothink.layer.LayerCollection;
 import org.meteothink.layer.MapLayer;
 import org.meteothink.legend.LabelBreak;
@@ -45,7 +45,8 @@ import org.meteothink.legend.PolygonBreak;
 import org.meteothink.legend.PolylineBreak;
 import org.meteothink.map.GridLabel;
 import org.meteothink.map.MapView;
-import org.meteothink.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.ProjUtil;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.projection.ProjectionUtil;
 import org.meteothink.projection.Reproject;
@@ -546,8 +547,8 @@ public class MapPlot extends AbstractPlot2D implements IWebMapPanel {
         } else {
             PointShape ps = new PointShape();
             PointD lonlatp = new PointD(text.getX(), text.getY());
-            PointD xyp = Reproject.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
-                    this.getMapView().getProjection().getProjInfo());
+            PointD xyp = ProjUtil.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
+                    this.getMapView().getProjection().getProjInfo().getCRS());
             ps.setPoint(xyp);
             LabelBreak lb = new LabelBreak();
             lb.setText(text.getText());
@@ -571,8 +572,8 @@ public class MapPlot extends AbstractPlot2D implements IWebMapPanel {
         if (this.getMapView().getProjection().isLonLatMap()) {
             ps.setPoint(lonlatp);
         } else {
-            PointD xyp = Reproject.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
-                    this.getMapView().getProjection().getProjInfo());
+            PointD xyp = ProjUtil.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
+                    this.getMapView().getProjection().getProjInfo().getCRS());
             ps.setPoint(xyp);
         }
         Graphic aGraphic = new Graphic(ps, pb);
@@ -599,8 +600,8 @@ public class MapPlot extends AbstractPlot2D implements IWebMapPanel {
             if (this.getMapView().getProjection().isLonLatMap()) {
                 ps.setPoint(lonlatp);
             } else {
-                xyp = Reproject.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
-                        this.getMapView().getProjection().getProjInfo());
+                xyp = ProjUtil.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
+                        this.getMapView().getProjection().getProjInfo().getCRS());
                 ps.setPoint(xyp);
             }
             Graphic aGraphic = new Graphic(ps, pb);
@@ -637,8 +638,8 @@ public class MapPlot extends AbstractPlot2D implements IWebMapPanel {
             } else {
                 lonlatp = new PointD(x, y);
                 if (!this.getMapView().getProjection().isLonLatMap()) {
-                    lonlatp = Reproject.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
-                            this.getMapView().getProjection().getProjInfo());
+                    lonlatp = ProjUtil.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
+                            this.getMapView().getProjection().getProjInfo().getCRS());
                 }
                 points.add(lonlatp);
             }
@@ -685,8 +686,8 @@ public class MapPlot extends AbstractPlot2D implements IWebMapPanel {
             } else {
                 lonlatp = new PointD(x, y);
                 if (!this.getMapView().getProjection().isLonLatMap()) {
-                    lonlatp = Reproject.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
-                            this.getMapView().getProjection().getProjInfo());
+                    lonlatp = ProjUtil.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
+                            this.getMapView().getProjection().getProjInfo().getCRS());
                 }
                 points.add(lonlatp);
             }
@@ -732,8 +733,8 @@ public class MapPlot extends AbstractPlot2D implements IWebMapPanel {
             } else {
                 lonlatp = new PointD(x, y);
                 if (!this.getMapView().getProjection().isLonLatMap()) {
-                    lonlatp = Reproject.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
-                            this.getMapView().getProjection().getProjInfo());
+                    lonlatp = ProjUtil.reprojectPoint(lonlatp, KnownCoordinateSystems.geographic.world.WGS1984,
+                            this.getMapView().getProjection().getProjInfo().getCRS());
                 }
                 points.add(lonlatp);
             }

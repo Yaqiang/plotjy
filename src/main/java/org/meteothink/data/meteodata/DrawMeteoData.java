@@ -22,7 +22,7 @@ import org.meteothink.drawing.Draw;
 import org.meteothink.legend.MarkerType;
 import org.meteothink.geoprocess.GeoComputation;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 import org.meteothink.ndarray.DataType;
 import org.meteothink.layer.LayerDrawType;
 import org.meteothink.layer.VectorLayer;
@@ -45,7 +45,7 @@ import java.util.logging.Logger;
 import org.meteothink.math.ArrayMath;
 import org.meteothink.math.ArrayUtil;
 import org.meteothink.data.GridArray;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.layer.ImageLayer;
 import org.meteothink.layer.RasterLayer;
 import org.meteothink.layer.WorldFilePara;
@@ -1557,6 +1557,30 @@ public class DrawMeteoData {
         }
 
         return createRasterLayer(gridData, lName, ls);
+    }
+    
+    /**
+     * Create reaster layer
+     *
+     * @param x X array
+     * @param y Y array
+     * @param data Grid data
+     * @param LName Layer name
+     * @param aLS Legend scheme
+     * @return Raster layer
+     */
+    public static RasterLayer createRasterLayer(Array x, Array y, Array data, String LName, LegendScheme aLS) {
+        RasterLayer aRLayer = new RasterLayer();
+        GridArray gridData = new GridArray(data, x, y);
+        aRLayer.setGridData(gridData);
+        aRLayer.setShapeType(ShapeTypes.Image);
+        aRLayer.setLegendScheme(aLS.convertTo(ShapeTypes.Image));
+        aRLayer.setLayerName(LName);
+        aRLayer.setVisible(true);
+        aRLayer.setLayerDrawType(LayerDrawType.Raster);
+        aRLayer.setMaskout(true);
+
+        return aRLayer;
     }
 
     /**

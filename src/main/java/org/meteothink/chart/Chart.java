@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.meteothink.chart.plot.Plot;
 import org.meteothink.drawing.Draw;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 
 /**
  *

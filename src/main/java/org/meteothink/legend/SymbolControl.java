@@ -16,7 +16,7 @@ package org.meteothink.legend;
 import org.meteothink.drawing.Draw;
 import org.meteothink.global.event.ISelectedCellChangedListener;
 import org.meteothink.global.event.SelectedCellChangedEvent;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import org.meteothink.shape.ShapeTypes;
 import java.awt.BorderLayout;
 import java.awt.Color;

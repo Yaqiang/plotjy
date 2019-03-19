@@ -13,12 +13,6 @@
  */
 package org.meteothink.shape;
 
-import org.meteothink.global.Extent;
-import org.meteothink.util.MIMath;
-import org.meteothink.global.PointD;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *
  * @author yaqiang

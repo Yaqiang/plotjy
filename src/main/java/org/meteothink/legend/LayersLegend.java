@@ -21,8 +21,8 @@ import org.meteothink.global.event.ILayersUpdatedListener;
 import org.meteothink.global.event.IMapFramesUpdatedListener;
 import org.meteothink.global.event.LayersUpdatedEvent;
 import org.meteothink.global.event.MapFramesUpdatedEvent;
-import org.meteothink.global.GenericFileFilter;
-import org.meteothink.global.PointF;
+import org.meteothink.common.GenericFileFilter;
+import org.meteothink.common.PointF;
 import org.meteothink.layer.FrmLayerProperty;
 import org.meteothink.layer.LayerTypes;
 import org.meteothink.layer.MapLayer;
@@ -77,7 +77,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.meteothink.data.mapdata.FrmAttriData;
 import org.meteothink.data.mapdata.webmap.WebMapProvider;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.FrmProperty;
 import org.meteothink.global.event.INodeSelectedListener;
 import org.meteothink.global.event.NodeSelectedEvent;
@@ -86,7 +86,7 @@ import org.meteothink.layer.WebMapLayer;
 import org.meteothink.map.MapView;
 import org.meteothink.map.MapViewUndoRedo;
 import org.meteothink.projection.info.ProjectionInfo;
-import org.meteothink.projection.ProjectionNames;
+import org.meteothink.common.projection.ProjectionName;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -955,7 +955,7 @@ public class LayersLegend extends JPanel {
         //layer.setDefaultProvider(DefaultProviders.OpenStreetMapQuestSattelite);
         //layer.setDefaultProvider(DefaultProviders.ArcGISImage);
         ProjectionInfo proj = this._currentMapFrame.getMapView().getProjection().getProjInfo();
-        if (proj.getProjectionName() != ProjectionNames.Mercator) {
+        if (proj.getProjectionName() != ProjectionName.Mercator) {
             if (JOptionPane.showConfirmDialog(null, "Not mercator projection! If project?", "Conform", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 ProjectionInfo toProj = ProjectionInfo.factory("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0");
                 this._currentMapFrame.getMapView().projectLayers(toProj);

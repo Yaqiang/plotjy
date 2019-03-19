@@ -30,8 +30,8 @@ import org.meteothink.global.FrmMeasurement;
 import org.meteothink.global.FrmMeasurement.MeasureTypes;
 import org.meteothink.global.FrmProperty;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointD;
+import org.meteothink.common.PointF;
 import org.meteothink.layer.LayerTypes;
 import org.meteothink.layer.MapLayer;
 import org.meteothink.layer.VectorLayer;
@@ -608,7 +608,7 @@ public class MapLayout extends JPanel implements IWebMapPanel {
                                                             value = GeoComputation.getDistance(((PolylineShape) aShape).getPoints(), true);
                                                         } else {
                                                             value = ((PolylineShape) aShape).getLength();
-                                                            value *= _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                                            value *= _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCRS().getProjection().getFromMetres();
                                                         }
                                                         break;
                                                     case Polygon:
@@ -620,8 +620,8 @@ public class MapLayout extends JPanel implements IWebMapPanel {
                                                         } else {
                                                             value = ((PolygonShape) aShape).getArea();
                                                         }
-                                                        value *= _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres()
-                                                                * _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                                        value *= _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCRS().getProjection().getFromMetres()
+                                                                * _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCRS().getProjection().getFromMetres();
                                                         break;
                                                 }
                                                 _frmMeasure.setCurrentValue(value);
@@ -991,7 +991,7 @@ public class MapLayout extends JPanel implements IWebMapPanel {
                                         dist = dist * 111319.5;
                                     } else {
                                         dist = Math.sqrt(dx * dx + dy * dy);
-                                        dist *= _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                        dist *= _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCRS().getProjection().getFromMetres();
                                     }
 
                                     _frmMeasure.setCurrentValue(dist);
@@ -1006,8 +1006,8 @@ public class MapLayout extends JPanel implements IWebMapPanel {
                                     if (_currentLayoutMap.getMapFrame().getMapView().getProjection().isLonLatMap()) {
                                         area = area * 111319.5 * 111319.5;
                                     } else {
-                                        area *= _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres()
-                                                * _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCoordinateReferenceSystem().getProjection().getFromMetres();
+                                        area *= _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCRS().getProjection().getFromMetres()
+                                                * _currentLayoutMap.getMapFrame().getMapView().getProjection().getProjInfo().getCRS().getProjection().getFromMetres();
                                     }
                                     _frmMeasure.setCurrentValue(area);
                                 }

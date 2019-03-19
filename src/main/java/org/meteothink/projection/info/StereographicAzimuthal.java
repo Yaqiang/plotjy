@@ -15,9 +15,9 @@ package org.meteothink.projection.info;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.meteothink.global.PointD;
-import org.meteothink.projection.KnownCoordinateSystems;
-import org.meteothink.projection.ProjectionNames;
+import org.meteothink.common.PointD;
+import org.meteothink.common.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.ProjectionName;
 import org.meteothink.projection.ProjectionUtil;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.meteothink.shape.PolygonShape;
@@ -49,13 +49,13 @@ public class StereographicAzimuthal extends ProjectionInfo {
      * @return Projection name
      */
     @Override
-    public ProjectionNames getProjectionName() {
+    public ProjectionName getProjectionName() {
         if (this.isNorthPolar()) {
-            return ProjectionNames.North_Polar_Stereographic_Azimuthal;
+            return ProjectionName.North_Polar_Stereographic_Azimuthal;
         } else if (this.isSouthPolar()) {
-            return ProjectionNames.South_Polar_Stereographic_Azimuthal;
+            return ProjectionName.South_Polar_Stereographic_Azimuthal;
         } else {
-            return ProjectionNames.Stereographic_Azimuthal;
+            return ProjectionName.Stereographic_Azimuthal;
         }
     }
 

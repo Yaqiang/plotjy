@@ -15,7 +15,7 @@ package org.meteothink.legend;
 
 import org.meteothink.drawing.Draw;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;

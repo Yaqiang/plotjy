@@ -18,11 +18,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.locationtech.proj4j.CoordinateReferenceSystem;
+import org.meteothink.common.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.ProjectionName;
 import org.meteothink.data.mapdata.Field;
 import org.meteothink.geoprocess.GeoComputation;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 import org.meteothink.layer.RasterLayer;
 import org.meteothink.layer.VectorLayer;
 import org.meteothink.map.ProjectionSet;
@@ -59,7 +62,7 @@ public class ProjectionUtil {
      * @return Extent
      */
     public static Extent getProjectionGlobalExtent(ProjectionInfo toProj) {
-        ProjectionInfo fromProj = KnownCoordinateSystems.geographic.world.WGS1984;
+        ProjectionInfo fromProj = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
         double x, y, minX = Double.NaN, minY = Double.NaN, maxX = Double.NaN, maxY = Double.NaN;
         int si = -90;
         int ei = 90;
@@ -527,7 +530,7 @@ public class ProjectionUtil {
      * @param toProj To projection info
      */
     public static void projectLayer(VectorLayer oLayer, ProjectionInfo toProj) {
-        double refLon = toProj.getCoordinateReferenceSystem().getProjection().getProjectionLongitudeDegrees();
+        double refLon = toProj.getCRS().getProjection().getProjectionLongitudeDegrees();
         refLon += 180;
         if (refLon > 180) {
             refLon = refLon - 360;
@@ -545,7 +548,7 @@ public class ProjectionUtil {
      * @param projectLabels If projectLabels
      */
     public static void projectLayer(VectorLayer oLayer, ProjectionInfo toProj, boolean projectLabels) {
-        double refLon = toProj.getCoordinateReferenceSystem().getProjection().getProjectionLongitudeDegrees();
+        double refLon = toProj.getCRS().getProjection().getProjectionLongitudeDegrees();
         refLon += 180;
         if (refLon > 180) {
             refLon = refLon - 360;
@@ -620,7 +623,7 @@ public class ProjectionUtil {
                 newPoints.clear();                
                 for (s = 0; s < oLayer.getShapeNum(); s++) {
                     PointShape aPS = (PointShape) oLayer.getShapes().get(s);
-                    if (fromProj.getProjectionName() == ProjectionNames.LongLat) {
+                    if (fromProj.getProjectionName() == ProjectionName.LongLat) {
                         switch (toProj.getProjectionName()) {
                             case Lambert_Conformal_Conic:
                                 if (aPS.getPoint().Y < cutoff) {
@@ -668,7 +671,7 @@ public class ProjectionUtil {
                 for (s = 0; s < oLayer.getShapeNum(); s++) {
                     PolylineShape aPLS = (PolylineShape) oLayer.getShapes().get(s);
                     List<PolylineShape> plsList = new ArrayList<>();
-                    if (fromProj.getProjectionName() == ProjectionNames.LongLat) {
+                    if (fromProj.getProjectionName() == ProjectionName.LongLat) {
                         switch (toProj.getProjectionName()) {
                             case Lambert_Conformal_Conic:
                                 if (aPLS.getExtent().minY < cutoff) {
@@ -752,7 +755,7 @@ public class ProjectionUtil {
                     DataRow aDR = oLayer.getAttributeTable().getTable().getRows().get(s);
                     PolygonShape aPGS = (PolygonShape) oLayer.getShapes().get(s);
                     List<PolygonShape> pgsList = new ArrayList<>();
-                    if (fromProj.getProjectionName() == ProjectionNames.LongLat) {
+                    if (fromProj.getProjectionName() == ProjectionName.LongLat) {
                         switch (toProj.getProjectionName()) {
                             case Lambert_Conformal_Conic:
                                 if (aPGS.getExtent().minY < cutoff) {
@@ -882,7 +885,7 @@ public class ProjectionUtil {
         newPoints.clear();
         for (s = 0; s < aLayer.getShapeNum(); s++) {
             PointShape aPS = (PointShape) aLayer.getShapes().get(s);
-            if (fromProj.getProjectionName() == ProjectionNames.LongLat) {
+            if (fromProj.getProjectionName() == ProjectionName.LongLat) {
                 switch (toProj.getProjectionName()) {
                     case Lambert_Conformal_Conic:
                     case North_Polar_Stereographic_Azimuthal:
@@ -977,7 +980,7 @@ public class ProjectionUtil {
         newPoints.clear();
         for (s = 0; s < oLayer.getShapeNum(); s++) {
             PointShape aPS = (PointShape) oLayer.getShapes().get(s);
-            if (fromProj.getProjectionName() == ProjectionNames.LongLat) {
+            if (fromProj.getProjectionName() == ProjectionName.LongLat) {
                 switch (toProj.getProjectionName()) {
                     case Lambert_Conformal_Conic:
                     case North_Polar_Stereographic_Azimuthal:
@@ -1199,6 +1202,30 @@ public class ProjectionUtil {
         }
 
         return pAngle;
+    }
+    
+    /**
+     * Project polygon shape
+     *
+     * @param aPGS A polygon shape
+     * @param fromProj From projection
+     * @param toCRS To CoordinateReferenceSystem
+     * @return Projected polygon shape
+     */
+    public static PolygonShape projectPolygonShape(PolygonShape aPGS, ProjectionInfo fromProj, CoordinateReferenceSystem toCRS) {
+        return projectPolygonShape(aPGS, fromProj, ProjectionInfo.factory(toCRS));
+    }
+    
+    /**
+     * Project polygon shape
+     *
+     * @param aPGS A polygon shape
+     * @param fromCRS From CoordinateReferenceSystem
+     * @param toProj To projection
+     * @return Projected polygon shape
+     */
+    public static PolygonShape projectPolygonShape(PolygonShape aPGS, CoordinateReferenceSystem fromCRS, ProjectionInfo toProj) {
+        return projectPolygonShape(aPGS, ProjectionInfo.factory(fromCRS), toProj);
     }
 
     /**

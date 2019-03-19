@@ -13,8 +13,8 @@
  */
 package org.meteothink.geoprocess;
 
-import org.meteothink.global.Extent;
-import org.meteothink.global.PointD;
+import org.meteothink.common.Extent;
+import org.meteothink.common.PointD;
 
 /**
  *

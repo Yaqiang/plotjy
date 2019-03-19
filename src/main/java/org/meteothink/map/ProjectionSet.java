@@ -15,12 +15,12 @@ package org.meteothink.map;
 
 import org.meteothink.global.event.IProjectionChangedListener;
 import org.meteothink.global.event.ProjectionChangedEvent;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 import org.meteothink.layer.RasterLayer;
 import org.meteothink.layer.VectorLayer;
-import org.meteothink.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.projection.Reproject;
 import org.meteothink.shape.CircleShape;
@@ -65,7 +65,7 @@ public class ProjectionSet {
      * Constructor
      */
     public ProjectionSet() {
-        _projInfo = KnownCoordinateSystems.geographic.world.WGS1984;
+        _projInfo = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
         //_projStr = _projInfo.getParameterString();
         //_refLon = 0;
     }
@@ -101,7 +101,7 @@ public class ProjectionSet {
      * @return Boolean
      */
     public boolean isLonLatMap() {
-        return "longlat".equals(_projInfo.getCoordinateReferenceSystem().getProjection().toString().toLowerCase());
+        return "longlat".equals(_projInfo.getCRS().getProjection().toString().toLowerCase());
     }
 
     /**
@@ -186,7 +186,7 @@ public class ProjectionSet {
      */
     public Extent getProjectedExtentFromLonLat(Extent sExtent) {
         Extent aExtent = new Extent();
-        ProjectionInfo fromProj = KnownCoordinateSystems.geographic.world.WGS1984;
+        ProjectionInfo fromProj = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
         ProjectionInfo toProj = _projInfo;
 
         //Get the border of longitude and latitude            

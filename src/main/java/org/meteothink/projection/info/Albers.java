@@ -15,9 +15,9 @@ package org.meteothink.projection.info;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.meteothink.global.PointD;
-import org.meteothink.projection.KnownCoordinateSystems;
-import org.meteothink.projection.ProjectionNames;
+import org.meteothink.common.PointD;
+import org.meteothink.common.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.ProjectionName;
 import org.meteothink.projection.ProjectionUtil;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.meteothink.shape.PolygonShape;
@@ -48,8 +48,8 @@ public class Albers extends ProjectionInfo {
      * @return Projection name
      */
     @Override
-    public ProjectionNames getProjectionName() {
-        return ProjectionNames.Albers_Equal_Area;
+    public ProjectionName getProjectionName() {
+        return ProjectionName.Albers_Equal_Area;
     }
 
     // </editor-fold>
@@ -88,7 +88,7 @@ public class Albers extends ProjectionInfo {
         points.add(new PointD(lon, lat));
         PolygonShape ps = new PolygonShape();
         ps.setPoints(points);
-        this.boundary = ProjectionUtil.projectPolygonShape(ps, KnownCoordinateSystems.geographic.world.WGS1984, this);
+        this.boundary = ProjectionUtil.projectPolygonShape(ps, ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984), this);
     }
     // </editor-fold>
 }

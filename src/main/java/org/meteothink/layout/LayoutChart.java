@@ -7,7 +7,7 @@ package org.meteothink.layout;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import org.meteothink.chart.Chart;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 
 /**
  *

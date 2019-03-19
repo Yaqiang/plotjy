@@ -13,7 +13,7 @@
  */
 package org.meteothink.geoprocess;
 
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 
 /**
  *

@@ -13,6 +13,8 @@
  */
 package org.meteothink.data.meteodata;
 
+import org.meteothink.ndarray.DimensionType;
+import org.meteothink.ndarray.Dimension;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

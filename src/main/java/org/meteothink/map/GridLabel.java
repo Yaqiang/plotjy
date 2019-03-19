@@ -13,8 +13,8 @@
  */
 package org.meteothink.map;
 
-import org.meteothink.global.Direction;
-import org.meteothink.global.PointD;
+import org.meteothink.common.Direction;
+import org.meteothink.common.PointD;
 
 /**
  *

@@ -13,7 +13,7 @@
  */
 package org.meteothink.data.meteodata;
 
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 
 /**
  *

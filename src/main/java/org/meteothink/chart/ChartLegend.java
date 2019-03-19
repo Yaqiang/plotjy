@@ -14,7 +14,7 @@
 package org.meteothink.chart;
 
 import org.meteothink.drawing.Draw;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import org.meteothink.legend.ColorBreak;
 import org.meteothink.legend.LegendScheme;
 import org.meteothink.legend.PointBreak;

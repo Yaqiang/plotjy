@@ -12,7 +12,7 @@ package org.meteothink.chart;
 
 import java.awt.Point;
 import org.meteothink.chart.plot3d.Projector;
-import org.meteothink.global.Extent3D;
+import org.meteothink.common.Extent3D;
 import org.meteothink.global.MIMath;
 import org.meteothink.shape.PointZ;
 

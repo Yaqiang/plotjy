@@ -45,7 +45,7 @@ import org.meteothink.data.mapdata.webmap.YahooHybridMapInfo;
 import org.meteothink.data.mapdata.webmap.YahooMapInfo;
 import org.meteothink.data.mapdata.webmap.YahooSatelliteMapInfo;
 import org.meteothink.data.mapdata.webmap.empty.EmptyTileFactory;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.shape.ShapeTypes;
 
 /**

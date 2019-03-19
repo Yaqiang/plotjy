@@ -15,12 +15,12 @@ package org.meteothink.shape;
 
 import org.meteothink.geoprocess.GeoComputation;
 import org.meteothink.global.MIMath;
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;

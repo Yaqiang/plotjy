@@ -4,7 +4,7 @@
  */
 package org.meteothink.layer;
 
-import org.meteothink.global.GenericFileFilter;
+import org.meteothink.common.GenericFileFilter;
 import org.meteothink.global.MIMath;
 import org.meteothink.ndarray.DataType;
 import org.meteothink.legend.ColorBreak;

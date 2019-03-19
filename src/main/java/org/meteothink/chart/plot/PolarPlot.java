@@ -19,7 +19,7 @@ import org.meteothink.chart.Margin;
 import org.meteothink.drawing.Draw;
 import static org.meteothink.drawing.Draw.getDashPattern;
 import org.meteothink.util.DataConvert;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.MIMath;
 import org.meteothink.util.BigDecimalUtil;
 import org.meteothink.legend.LineStyles;

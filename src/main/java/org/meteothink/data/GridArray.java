@@ -20,7 +20,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.MIMath;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,15 +28,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import org.meteothink.data.meteodata.Dimension;
-import org.meteothink.data.meteodata.DimensionType;
+import org.meteothink.ndarray.Dimension;
+import org.meteothink.ndarray.DimensionType;
 import org.meteothink.data.meteodata.GridDataSetting;
 import org.meteothink.geoprocess.analysis.ResampleMethods;
 import org.meteothink.util.BigDecimalUtil;
 import org.meteothink.legend.LegendManage;
 import org.meteothink.math.ArrayMath;
 import org.meteothink.math.ArrayUtil;
-import org.meteothink.projection.KnownCoordinateSystems;
+import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.projection.ProjectionUtil;
 import org.meteothink.projection.Reproject;
@@ -148,6 +148,17 @@ public class GridArray {
         this.missingValue = missingValue;
         this.projInfo = projInfo;
     }
+    
+    /**
+     * Constructor
+     *
+     * @param array Data array
+     * @param xdata X data
+     * @param ydata Y data
+     */
+    public GridArray(Array array, Array xdata, Array ydata) {
+        this(array, xdata, ydata, Double.NaN);
+    }
 
     /**
      * Constructor
@@ -172,7 +183,7 @@ public class GridArray {
         }
 
         this.missingValue = missingValue.doubleValue();
-        this.projInfo = KnownCoordinateSystems.geographic.world.WGS1984;;
+        this.projInfo = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
     }
     // </editor-fold>
     // <editor-fold desc="Get Set Methods">
@@ -911,7 +922,7 @@ public class GridArray {
                     eCValue = -3;
                     break;
             }
-            ProjectionInfo toProj = KnownCoordinateSystems.geographic.world.WGS1984;
+            ProjectionInfo toProj = ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984);
             double[][] points = new double[2][];
             points[0] = new double[]{sLon, sLat};
             points[1] = new double[]{eLon, eLat};

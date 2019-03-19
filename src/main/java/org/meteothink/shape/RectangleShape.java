@@ -15,7 +15,7 @@ package org.meteothink.shape;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.meteothink.global.PointD;
+import org.meteothink.common.PointD;
 
 /**
  *

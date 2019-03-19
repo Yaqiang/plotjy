@@ -16,7 +16,7 @@ package org.meteothink.layer;
 import com.l2fprod.common.beans.BaseBeanInfo;
 import com.l2fprod.common.beans.ExtendedPropertyDescriptor;
 import com.l2fprod.common.beans.editor.ComboBoxPropertyEditor;
-import org.meteothink.global.Extent;
+import org.meteothink.common.Extent;
 import org.meteothink.global.util.GlobalUtil;
 import org.meteothink.shape.ShapeTypes;
 import java.awt.Color;

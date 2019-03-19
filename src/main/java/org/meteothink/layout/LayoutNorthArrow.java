@@ -15,7 +15,7 @@ package org.meteothink.layout;
 
 import com.l2fprod.common.beans.BaseBeanInfo;
 import org.meteothink.drawing.Draw;
-import org.meteothink.global.PointF;
+import org.meteothink.common.PointF;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
