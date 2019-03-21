@@ -9,7 +9,7 @@ from axes3d import Axes3D
 
 from java.awt import Font
 
-class Figure(ChartPanel):
+class Figure(object):
     '''
     top level container for all plot elements
     '''
@@ -25,9 +25,9 @@ class Figure(ChartPanel):
         chart = Chart()
         chart.setBackground(plotutil.getcolor(bgcolor))
         if figsize is None:
-            super(Figure, self).__init__(chart)
+            self._figure = ChartPanel(chart)
         else:
-            super(Figure, self).__init__(chart, figsize[0], figsize[1])
+            self._figure = ChartPanel(chart, figsize[0], figsize[1])
         self.axes = []
         self.current_axes = -1
             
@@ -37,7 +37,7 @@ class Figure(ChartPanel):
         
         :returns: Figure width and height
         '''
-        return self.getFigureWidth(), self.getFigureHeight()
+        return self._figure.getFigureWidth(), self._figure.getFigureHeight()
      
     def __create_axes(self, *args, **kwargs):
         """
@@ -385,7 +385,7 @@ class Figure(ChartPanel):
             ax = MapAxes(figure=self, **kwargs)
             self.__set_axesm(ax, **kwargs)
         elif axestype == '3d':
-            ax = Axes3D(figure = self, **kwargs)
+            ax = Axes3D(figure=self, **kwargs)
             self.__set_axes3d(ax, **kwargs)
         else:
             ax = Axes(figure=self)
@@ -417,7 +417,7 @@ class Figure(ChartPanel):
         '''
         ax = self.new_axes(*args, **kwargs)
         newaxes = kwargs.pop('newaxes', True)
-        chart = self.getChart()
+        chart = self.get_chart()
         if newaxes:
             self._add_axes(ax)
         else:
@@ -438,7 +438,7 @@ class Figure(ChartPanel):
         :param ax: (*Axes*) The axes.
         '''
         self.axes.append(ax)
-        self.getChart().addPlot(ax.axes)
+        self._figure.getChart().addPlot(ax.axes)
         
     def remove_axes(self, ax=None):
         '''
@@ -448,19 +448,19 @@ class Figure(ChartPanel):
         '''
         if ax is None:
             self.axes = []
-            self.getChart().getPlots().clear()
+            self._figure.getChart().getPlots().clear()
         elif isinstance(ax, int):
             self.axes.pop(ax)
-            self.getChart().getPlots().remove(ax)
+            self._figure.getChart().getPlots().remove(ax)
         else:
             self.axes.remove(ax)
-            self.getChart().removePlot(ax.axes)
+            self._figure.getChart().removePlot(ax.axes)
         
     def draw(self):
         '''
         Re-paint the figure.
         '''
-        self.paintGraphics()
+        self._figure.paintGraphics()
         
     def set_mousemode(self, mm):
         '''
@@ -470,7 +470,7 @@ class Figure(ChartPanel):
             | rotate | select].
         '''
         mm = MouseMode.valueOf(mm.upper())
-        self.setMouseMode(mm)
+        self._figure.setMouseMode(mm)
 
     def subplot(self, nrows, ncols, plot_number, **kwargs):
         """
@@ -484,7 +484,7 @@ class Figure(ChartPanel):
 
         :returns: Current axes specified by ``plot_number`` .
         """
-        chart = self.getChart()
+        chart = self.get_chart()
         chart.setRowNum(nrows)
         chart.setColumnNum(ncols)
         polar = kwargs.pop('polar', False)
@@ -586,7 +586,7 @@ class Figure(ChartPanel):
         width = float(position[2])
         height = float(position[3])
 
-        chart = self.getChart()
+        chart = self.get_chart()
         chart.setRowNum(nrows)
         chart.setColumnNum(ncols)
         axs = []
@@ -654,11 +654,23 @@ class Figure(ChartPanel):
         chart.setCurrentPlot(0)
         return tuple(axs)
         
+    def get_chart(self):
+        '''
+        Get chart
+        '''
+        return self._figure.getChart()
+        
+    def paint(self):
+        '''
+        Paint
+        '''
+        self._figure.paintGraphics()
+        
     def get_title(self):
         '''
         Get title               
         '''
-        return self.getChart().getTitle()  
+        return self._figure.getChart().getTitle()  
         
     def set_title(self, label, fontname=None, fontsize=14, bold=True, color='black'):
         """
@@ -684,10 +696,60 @@ class Figure(ChartPanel):
         ctitle = ChartText(label, font)
         ctitle.setUseExternalFont(exfont)
         ctitle.setColor(c)
-        self.getChart().setTitle(ctitle)
+        self._figure.getChart().setTitle(ctitle)
         return ctitle
         
-########################################################3
-class Test():
-    def test():
-        print 'Test...'
+    def savefig(self, fname, width=None, height=None, dpi=None, sleep=None):
+        """
+        Save the figure to image file.
+        
+        :param fname: (*string*) A string containing a path to a filename. The output format
+            is deduced from the extention of the filename. Supported format: 'png', 'bmp',
+            'jpg', 'eps' and 'pdf'.
+        :param width: (*int*) Optional, width of the output figure with pixel units. Default
+            is None, the output figure size is same as *figures* window.
+        :param height: (*int*) Optional, height of the output figure with pixel units. Default
+            is None, the output figure size is same as *figures* window.
+        :param dpi: (*int*) Optional, figure resolution.
+        :param sleep: (*int*) Optional, sleep seconds. For web map tiles loading.
+        """
+        if fname.endswith('.eps') or fname.endswith('.pdf'):
+            dpi = None
+            
+        if dpi != None:
+            if (not width is None) and (not height is None):
+                self._figure.saveImage(fname, dpi, width, height, sleep)
+            else:
+                self._figure.saveImage(fname, dpi, sleep)
+        else:
+            if (not width is None) and (not height is None):
+                self._figure.saveImage(fname, width, height, sleep)
+            else:
+                self._figure.saveImage(fname, sleep) 
+                
+    def savefig_jpeg(self, fname, width=None, height=None, dpi=None):
+        """
+        Save the figure as a jpeg file.
+        
+        :param fname: (*string*) A string containing a path to a filename. The output format
+            is deduced from the extention of the filename. Supported format: 'jpg'.
+        :param width: (*int*) Optional, width of the output figure with pixel units. Default
+            is None, the output figure size is same as *figures* window.
+        :param height: (*int*) Optional, height of the output figure with pixel units. Default
+            is None, the output figure size is same as *figures* window.
+        """
+        #if (not width is None) and (not height is None):
+        #    self._figure.setSize(width, height)
+        #self.paint()
+        if not dpi is None:
+            if (not width is None) and (not height is None):
+                self._figure.saveImage_Jpeg(fname, width, height, dpi)
+            else:
+                self._figure.saveImage_Jpeg(fname, dpi)
+        else:
+            if (not width is None) and (not height is None):
+                self._figure.saveImage(fname, width, height)
+            else:
+                self._figure.saveImage(fname) 
+        
+########################################################

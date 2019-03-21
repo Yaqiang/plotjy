@@ -34,7 +34,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.meteothink.ndarray.Dimension;
 import org.meteothink.ndarray.DimensionType;
-import org.meteothink.data.meteodata.GridDataSetting;
 import org.meteothink.geoprocess.analysis.ResampleMethods;
 import org.meteothink.util.DataConvert;
 import org.meteothink.layer.VectorLayer;

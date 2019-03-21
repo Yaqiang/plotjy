@@ -278,19 +278,24 @@ public class ChartPanel extends JPanel {
                 customCursor = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
                 break;
             case ZOOM_IN:
-                image = toolkit.getImage(this.getClass().getResource("/images/zoom_in_32x32x32.png"));
-                customCursor = toolkit.createCustomCursor(image, new Point(8, 8), "Zoom In");
+                try {
+                    //image = toolkit.getImage(this.getClass().getResource("/images/zoom_in.png"));
+                    image = ImageIO.read(this.getClass().getResourceAsStream("/images/zoom_in.png"));
+                    customCursor = toolkit.createCustomCursor(image, new Point(8, 8), "Zoom In");
+                } catch (IOException ex) {
+                    Logger.getLogger(ChartPanel.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 break;
             case ZOOM_OUT:
-                image = toolkit.getImage(this.getClass().getResource("/images/zoom_out_32x32x32.png"));
-                customCursor = toolkit.createCustomCursor(image, new Point(8, 8), "Zoom In");
+                image = toolkit.getImage(this.getClass().getResource("/images/zoom_out.png"));
+                customCursor = toolkit.createCustomCursor(image, new Point(8, 8), "Zoom Out");
                 break;
             case PAN:
-                image = toolkit.getImage(this.getClass().getResource("/images/Pan_Open_32x32x32.png"));
+                image = toolkit.getImage(this.getClass().getResource("/images/pan.png"));
                 customCursor = toolkit.createCustomCursor(image, new Point(8, 8), "Pan");
                 break;
             case IDENTIFER:
-                image = toolkit.getImage(this.getClass().getResource("/images/identifer_32x32x32.png"));
+                image = toolkit.getImage(this.getClass().getResource("/images/identifer.png"));
                 customCursor = toolkit.createCustomCursor(image, new Point(8, 8), "Identifer");
                 break;
             case ROTATE:

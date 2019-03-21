@@ -17,7 +17,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import org.meteothink.data.meteodata.GridDataSetting;
 import org.meteothink.geoprocess.analysis.InterpolationSetting;
 import org.meteothink.common.Extent;
 import org.meteothink.global.MIMath;

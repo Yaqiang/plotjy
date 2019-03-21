@@ -17,7 +17,7 @@ import org.meteothink.chart.MouseMode;
  */
 public class ChartForm extends javax.swing.JFrame {
 
-    private ChartPanel chartPanel;
+    private ChartPanel chartPanel = new ChartPanel();
     
     /**
      * Creates new form ChartForm
@@ -27,7 +27,7 @@ public class ChartForm extends javax.swing.JFrame {
         initComponents();
         
         this.chartPanel = chartPanel;
-        //this.chartPanel.setMouseMode(MouseMode.ZOOM_IN);
+        this.chartPanel.setMouseMode(MouseMode.PAN);
         this.getContentPane().add(this.chartPanel, BorderLayout.CENTER);
         
 //        BufferedImage image = null;

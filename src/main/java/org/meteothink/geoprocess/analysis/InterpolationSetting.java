@@ -15,7 +15,7 @@ package org.meteothink.geoprocess.analysis;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.meteothink.data.meteodata.GridDataSetting;
+import org.meteothink.data.GridDataSetting;
 
 /**
  *

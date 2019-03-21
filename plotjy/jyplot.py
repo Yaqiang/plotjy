@@ -5,6 +5,8 @@ import datetime
 import math
 import sys
 
+import numjy as np
+
 from org.meteothink.chart import Location
 from org.meteothink.chart.plot import Plot2D, Plot3D
 from org.meteothink.chart import ChartText
@@ -16,7 +18,6 @@ from org.meteothink.shape import ShapeTypes
 from javax.swing import WindowConstants
 from java.awt import Font
 
-import numjy as np
 from axes import Axes, PolarAxes
 from axes3d import Axes3D
 import plotutil
@@ -33,7 +34,7 @@ __all__ = [
     'gca','annotate','antialias','arrow','arrowline','axes','axes3d','axesm','caxes','axis','axism','bar','barh','barbs','barbsm','bgcolor','box',
     'boxplot','windrose','cla','clabel','clc','clear','clf','cll','cloudspec','colorbar','contour','contourf',
     'contourfm','contourm','draw','draw_if_interactive','errorbar',
-    'figure','figsize','patch','rectangle','fill_between','fill_betweenx','webmap','geoshow','gifaddframe','gifanimation','giffinish',
+    'figure','Figure','figsize','patch','rectangle','fill_between','fill_betweenx','webmap','geoshow','gifaddframe','gifanimation','giffinish',
     'grid','gridshow','gridshowm','hist','imshow','imshowm','legend','left_title','loglog','makecolors',
     'makelegend','makesymbolspec','masklayer','pcolor','pcolorm','pie','plot','plot3','plotm','quiver',
     'quiverkey','quiverm','readlegend','right_title','savefig','savefig_jpeg','scatter','scatter3','scatterm',
@@ -61,13 +62,13 @@ def draw_if_interactive():
     Draw current figure if is interactive model.
     '''
     if isinteractive:
-		g_figure.paintGraphics()
+		g_figure.paint()
         
 def draw():
     '''
     Draw the current figure.
     '''
-    g_figure.paintGraphics()
+    g_figure.paint()
     
 def plot(*args, **kwargs):
     """
@@ -1073,8 +1074,8 @@ def show(newfig=True):
     if figure_parent is None:
         #print 'figure_parent is None'
         if not batchmode:            
-            form = ChartForm(g_figure)
-            g_figure.paintGraphics()
+            form = ChartForm(g_figure._figure)
+            g_figure.paint()
             form.setSize(600, 500)
             form.setLocationRelativeTo(None)
             form.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
@@ -1082,12 +1083,12 @@ def show(newfig=True):
     else:
         #print figure_parent
         if newfig:
-            figure_parent.addFigure(g_figure)
+            figure_parent.addFigure(g_figure._figure)
         else:
             if figure_parent.getCurrentFigure() is None:
-                figure_parent.addFigure(g_figure)
+                figure_parent.addFigure(g_figure._figure)
             else:
-                figure_parent.setCurrentFigure(g_figure) 
+                figure_parent.setCurrentFigure(g_figure._figure) 
     
 # Set figure background color
 def bgcolor(color):
@@ -1096,7 +1097,7 @@ def bgcolor(color):
     
     :param color: (*Color*) Background color    
     '''
-    chart = g_figure.getChart()
+    chart = g_figure.get_chart()
     chart.setBackground(plotutil.getcolor(color))
     draw_if_interactive()    
     
@@ -1108,7 +1109,7 @@ def caxes(ax=None):
         axes.
     '''
     global gca
-    chart = g_figure.getChart()    
+    chart = g_figure.get_chart()    
     if isinstance(ax, int):
         if g_figure is None:
             figure()
@@ -1179,7 +1180,7 @@ def currentplot(plot_number):
         figure()
         
     global gca
-    chart = g_figure.getChart()
+    chart = g_figure.get_chart()
     gca = __get_axes(chart, plot_number)
     chart.setCurrentPlot(plot_number - 1)
     
@@ -1223,7 +1224,7 @@ def axes(*args, **kwargs):
     if g_figure is None:
         figure()
     ax = g_figure.add_axes(*args, **kwargs) 
-    # chart = g_figure.getChart()
+    # chart = g_figure.get_chart()
     # newaxes = kwargs.pop('newaxes', True)
     # if not newaxes and gca is None:
         # newaxes = True
@@ -1386,10 +1387,10 @@ def antialias(b=None, symbol=None):
         figure()
     
     if b is None:
-        b = not g_figure.getChart().isAntiAlias()
-    g_figure.getChart().setAntiAlias(b)
+        b = not g_figure.get_chart().isAntiAlias()
+    g_figure.get_chart().setAntiAlias(b)
     if not symbol is None:
-        g_figure.getChart().setSymbolAntialias(symbol)
+        g_figure.get_chart().setSymbolAntialias(symbol)
     draw_if_interactive()
     
 def savefig(fname, width=None, height=None, dpi=None, sleep=None):
@@ -1406,19 +1407,7 @@ def savefig(fname, width=None, height=None, dpi=None, sleep=None):
     :param dpi: (*int*) Optional, figure resolution.
     :param sleep: (*int*) Optional, sleep seconds. For web map tiles loading.
     """
-    if fname.endswith('.eps') or fname.endswith('.pdf'):
-        dpi = None
-        
-    if dpi != None:
-        if (not width is None) and (not height is None):
-            g_figure.saveImage(fname, dpi, width, height, sleep)
-        else:
-            g_figure.saveImage(fname, dpi, sleep)
-    else:
-        if (not width is None) and (not height is None):
-            g_figure.saveImage(fname, width, height, sleep)
-        else:
-            g_figure.saveImage(fname, sleep)  
+    g_figure.savefig(fname, width, height, dpi, sleep)
         
 def savefig_jpeg(fname, width=None, height=None, dpi=None):
     """
@@ -1431,19 +1420,7 @@ def savefig_jpeg(fname, width=None, height=None, dpi=None):
     :param height: (*int*) Optional, height of the output figure with pixel units. Default
         is None, the output figure size is same as *figures* window.
     """
-    #if (not width is None) and (not height is None):
-    #    g_figure.setSize(width, height)
-    #g_figure.paintGraphics()
-    if not dpi is None:
-        if (not width is None) and (not height is None):
-            g_figure.saveImage_Jpeg(fname, width, height, dpi)
-        else:
-            g_figure.saveImage_Jpeg(fname, dpi)
-    else:
-        if (not width is None) and (not height is None):
-            g_figure.saveImage(fname, width, height)
-        else:
-            g_figure.saveImage(fname)  
+    g_figure.savefig_jpeg(fname, width, height, dpi)
 
 # Clear current axes
 def cla():
@@ -1454,9 +1431,9 @@ def cla():
     if not gca is None:
         if not g_figure is None:
             g_figure.remove_axes(gca)
-            #chart = g_figure.getChart()
+            #chart = g_figure.get_chart()
             #if not chart is None:
-            #    g_figure.getChart().removePlot(gca.axes)
+            #    g_figure.get_chart().removePlot(gca.axes)
         gca = None
         draw_if_interactive()
 
@@ -1468,12 +1445,12 @@ def clf():
     if g_figure is None:
         return
     
-    if g_figure.getChart() is None:
+    if g_figure.get_chart() is None:
         return
     
-    g_figure.getChart().setTitle(None)
-    g_figure.getChart().clearPlots()
-    g_figure.getChart().clearTexts()
+    g_figure.get_chart().setTitle(None)
+    g_figure.get_chart().clearPlots()
+    g_figure.get_chart().clearTexts()
     global gca
     gca = None
     draw_if_interactive()
@@ -1724,7 +1701,7 @@ def text(x, y, s, **kwargs):
     ctext = plotutil.text(x, y, s, **kwargs)
     coordinates = kwargs.pop('coordinates', 'data')
     if coordinates == 'figure':
-        g_figure.getChart().addText(ctext)
+        g_figure.get_chart().addText(ctext)
     else:
         gca.axes.addText(ctext)
     draw_if_interactive()
@@ -2811,7 +2788,7 @@ def gifaddframe(animation):
     
     :param animation: Gif animation object
     """
-    #g_figure.paintGraphics()
+    #g_figure.paint()
     animation.addFrame(g_figure.paintViewImage())
     
 def giffinish(animation):
