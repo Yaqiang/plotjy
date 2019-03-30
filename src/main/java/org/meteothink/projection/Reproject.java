@@ -16,6 +16,7 @@ package org.meteothink.projection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.common.PointD;
 import org.meteothink.common.Extent;
@@ -29,6 +30,7 @@ import org.meteothink.geoprocess.analysis.ResampleMethods;
 import org.meteothink.math.ArrayUtil;
 import org.meteothink.ndarray.DataType;
 import org.meteothink.ndarray.Index;
+import org.meteothink.ndarray.IndexIterator;
 import org.meteothink.ndarray.Range;
 
 /**
@@ -54,6 +56,17 @@ public class Reproject {
         PointD rPoint = new PointD(points[0][0], points[0][1]);
         
         return rPoint;
+    }
+    
+    /**
+     * Reproject a point
+     * @param point The point
+     * @param source Source projection info
+     * @param dest Destination projection info
+     * @return Projected point
+     */
+    public static PointD reprojectPoint(PointD point, CoordinateReferenceSystem source, CoordinateReferenceSystem dest) {
+        return reprojectPoint(point.X, point.Y, ProjectionInfo.factory(source), ProjectionInfo.factory(dest));
     }
     
     /**
@@ -110,6 +123,23 @@ public class Reproject {
             points[i][0] = p2.x;
             points[i][1] = p2.y;
         }
+    }
+    
+    /**
+     * Project grid data
+     *
+     * @param data Data array
+     * @param xx X array
+     * @param yy Y array
+     * @param fromProj From projection
+     * @param toProj To projection
+     * @param method Resample method
+     * @return Porjected grid data
+     * @throws org.meteothink.ndarray.InvalidRangeException
+     */
+    public static Object[] reproject(Array data, List<Number> xx, List<Number> yy, CoordinateReferenceSystem fromProj,
+            CoordinateReferenceSystem toProj, ResampleMethods method) throws InvalidRangeException {
+        return reproject(data, xx, yy, ProjectionInfo.factory(fromProj), ProjectionInfo.factory(toProj), method);
     }
     
     /**
@@ -487,5 +517,33 @@ public class Reproject {
         }
 
         return r;
+    }
+    
+    /**
+     * Reproject
+     *
+     * @param x X array
+     * @param y Y array
+     * @param fromProj From projection
+     * @param toProj To projection
+     * @return Result arrays
+     */
+    public static Array[] reproject(Array x, Array y, ProjectionInfo fromProj, ProjectionInfo toProj) {
+        Array rx = Array.factory(DataType.DOUBLE, x.getShape());
+        Array ry = Array.factory(DataType.DOUBLE, x.getShape());
+        int n = (int) x.getSize();
+        double[][] points = new double[n][];
+        IndexIterator iterX = x.getIndexIterator();
+        IndexIterator iterY = y.getIndexIterator();
+        for (int i = 0; i < n; i++) {
+            points[i] = new double[]{iterX.getDoubleNext(), iterY.getDoubleNext()};
+        }
+        Reproject.reprojectPoints(points, fromProj, toProj, 0, points.length);
+        for (int i = 0; i < n; i++) {
+            rx.setDouble(i, points[i][0]);
+            ry.setDouble(i, points[i][1]);
+        }
+
+        return new Array[]{rx, ry};
     }
 }

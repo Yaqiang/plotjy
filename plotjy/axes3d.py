@@ -4,9 +4,11 @@ from org.meteothink.chart.plot import Plot3D, GraphicFactory
 from org.meteothink.chart import ChartText3D
 from org.meteothink.legend import LegendManage, BreakTypes, PolylineBreak
 from org.meteothink.shape import ShapeTypes, Graphic
+from org.meteothink.layer import LayerTypes
 
 from axes import Axes
 import numjy as np
+from numjy.core.dimarray import DimArray
 import plotutil
 
 import datetime
@@ -720,32 +722,31 @@ class Axes3D(Axes):
         offset = kwargs.pop('offset', 0)
         xaxistype = None
         if n <= 2:
-            gdata = np.asgriddata(args[0])
-            if isinstance(args[0], DimArray):
-                if args[0].islondim(1):
-                    xaxistype = 'lon'
-                elif args[0].islatdim(1):
-                    xaxistype = 'lat'
-                elif args[0].istimedim(1):
-                    xaxistype = 'time'
+            a = args[0]
+            if isinstance(a, DimArray):
+                y = a.dimvalue(0)
+                x = a.dimvalue(1)
+            else:
+                yn, xn = a.shape
+                x = np.arange(xn)
+                y = np.arange(yn) 
             args = args[1:]
         elif n <=4:
             x = args[0]
             y = args[1]
             a = args[2]
-            gdata = np.asgriddata(a, x, y, fill_value)
             args = args[3:]
         if len(args) > 0:
             level_arg = args[0]
             if isinstance(level_arg, int):
                 cn = level_arg
-                ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), cn, cmap)
+                ls = LegendManage.createLegendScheme(a.min(), a.max(), cn, cmap)
             else:
                 if isinstance(level_arg, np.NDArray):
                     level_arg = level_arg.aslist()
-                ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), level_arg, cmap)
+                ls = LegendManage.createLegendScheme(a.min(), a.max(), level_arg, cmap)
         else:    
-            ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), cmap)
+            ls = LegendManage.createLegendScheme(a.min(), a.max(), cmap)
         ls = ls.convertTo(ShapeTypes.Polyline)
         plotutil.setlegendscheme(ls, **kwargs)
         
@@ -753,10 +754,10 @@ class Axes3D(Axes):
         zdir = kwargs.pop('zdir', 'z')
         if zdir == 'xy':
             sepoint = kwargs.pop('sepoint', [0,0,1,1])
-            igraphic = GraphicFactory.createContourLines(gdata.data, offset, zdir, ls, smooth, \
+            igraphic = GraphicFactory.createContourLines(x._array, y._array, a._array, offset, zdir, ls, smooth, \
                 sepoint)
         else:
-            igraphic = GraphicFactory.createContourLines(gdata.data, offset, zdir, ls, smooth)
+            igraphic = GraphicFactory.createContourLines(x._array, y._array, a._array, offset, zdir, ls, smooth)
         visible = kwargs.pop('visible', True)
         if visible:
             self.add_graphic(igraphic)
@@ -786,32 +787,31 @@ class Axes3D(Axes):
         offset = kwargs.pop('offset', 0)
         xaxistype = None
         if n <= 2:
-            gdata = np.asgriddata(args[0])
-            if isinstance(args[0], DimArray):
-                if args[0].islondim(1):
-                    xaxistype = 'lon'
-                elif args[0].islatdim(1):
-                    xaxistype = 'lat'
-                elif args[0].istimedim(1):
-                    xaxistype = 'time'
+            a = args[0]
+            if isinstance(a, DimArray):
+                y = a.dimvalue(0)
+                x = a.dimvalue(1)
+            else:
+                yn, xn = a.shape
+                x = np.arange(xn)
+                y = np.arange(yn) 
             args = args[1:]
         elif n <=4:
             x = args[0]
             y = args[1]
             a = args[2]
-            gdata = np.asgriddata(a, x, y, fill_value)
             args = args[3:]
         if len(args) > 0:
             level_arg = args[0]
             if isinstance(level_arg, int):
                 cn = level_arg
-                ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), cn, cmap)
+                ls = LegendManage.createLegendScheme(a.min(), a.max(), cn, cmap)
             else:
                 if isinstance(level_arg, np.NDArray):
                     level_arg = level_arg.aslist()
-                ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), level_arg, cmap)
+                ls = LegendManage.createLegendScheme(a.min(), a.max(), level_arg, cmap)
         else:    
-            ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), cmap)
+            ls = LegendManage.createLegendScheme(a.min(), a.max(), cmap)
         ls = ls.convertTo(ShapeTypes.Polygon)
         edge = kwargs.pop('edge', None)
         if edge is None:
@@ -824,10 +824,10 @@ class Axes3D(Axes):
         zdir = kwargs.pop('zdir', 'z')
         if zdir == 'xy':
             sepoint = kwargs.pop('sepoint', [0,0,1,1])
-            igraphic = GraphicFactory.createContourPolygons(gdata.data, offset, zdir, ls, smooth, \
+            igraphic = GraphicFactory.createContourPolygons(x._array, y._array, a._array, offset, zdir, ls, smooth, \
                 sepoint)
         else:
-            igraphic = GraphicFactory.createContourPolygons(gdata.data, offset, zdir, ls, smooth)
+            igraphic = GraphicFactory.createContourPolygons(x._array, y._array, a._array, offset, zdir, ls, smooth)
         visible = kwargs.pop('visible', True)
         if visible:
             self.add_graphic(igraphic)
@@ -875,14 +875,14 @@ class Axes3D(Axes):
                     x = rgbdata.dimvalue(1)
                     y = rgbdata.dimvalue(0)
             else:
-                gdata = np.asgridarray(args[0])
-                if isinstance(args[0], DimArray):
-                    if args[0].islondim(1):
-                        xaxistype = 'lon'
-                    elif args[0].islatdim(1):
-                        xaxistype = 'lat'
-                    elif args[0].istimedim(1):
-                        xaxistype = 'time'
+                a = args[0]
+                if isinstance(a, DimArray):
+                    y = a.dimvalue(0)
+                    x = a.dimvalue(1)
+                else:
+                    yn, xn = a.shape
+                    x = np.arange(xn)
+                    y = np.arange(yn) 
                 args = args[1:]
         elif n <=4:
             x = args[0]
@@ -895,7 +895,6 @@ class Axes3D(Axes):
                 isrgb = True
                 rgbdata = a
             else:
-                gdata = np.asgridarray(a, x, y, fill_value)
                 args = args[3:]   
         
         offset = kwargs.pop('offset', 0)
@@ -918,20 +917,20 @@ class Axes3D(Axes):
                 level_arg = args[0]
                 if isinstance(level_arg, int):
                     cn = level_arg
-                    ls = LegendManage.createImageLegend(gdata, cn, cmap)
+                    ls = LegendManage.createImageLegend(a._array, cn, cmap)
                 else:
                     if isinstance(level_arg, np.NDArray):
                         level_arg = level_arg.aslist()
-                    ls = LegendManage.createImageLegend(gdata, level_arg, cmap)
+                    ls = LegendManage.createImageLegend(a._array, level_arg, cmap)
             else:
-                ls = plotutil.getlegendscheme(args, gdata.min(), gdata.max(), **kwargs)
+                ls = plotutil.getlegendscheme(args, a.min(), a.max(), **kwargs)
             ls = ls.convertTo(ShapeTypes.Image)
             plotutil.setlegendscheme(ls, **kwargs)
             if zdir == 'xy':
                 sepoint = kwargs.pop('sepoint', [0,0,1,1])
             else:
                 sepoint = None
-            graphics = GraphicFactory.createImage(gdata, ls, offset, zdir, sepoint, interpolation)
+            graphics = GraphicFactory.createImage(x._array, y._array, a._array, ls, offset, zdir, sepoint, interpolation)
                 
         visible = kwargs.pop('visible', True)
         if visible:
@@ -1202,6 +1201,4 @@ class Axes3D(Axes):
         sy = self.figure.get_size()[1] - sy
         return sx, sy
 
-##################################33
-def test():
-    print 'Test!'
+##################################

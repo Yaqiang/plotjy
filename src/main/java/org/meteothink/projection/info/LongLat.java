@@ -15,6 +15,7 @@ package org.meteothink.projection.info;
 
 import org.meteothink.common.projection.ProjectionName;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
+import org.meteothink.common.projection.KnownCoordinateSystems;
 
 /**
  *
@@ -24,6 +25,13 @@ public class LongLat extends ProjectionInfo {
     // <editor-fold desc="Variables">
     // </editor-fold>
     // <editor-fold desc="Constructor">
+    /**
+     * Constructor
+     */
+    public LongLat() {
+        this.crs = KnownCoordinateSystems.geographic.world.WGS1984;
+    }
+    
     /**
      * Construction
      * @param crs Coorinate reference system

@@ -9,14 +9,17 @@ from org.meteothink.geoprocess import GeoComputation
 from org.meteothink.math import ArrayMath, ArrayUtil
 from org.meteothink.data.mapdata import MapDataManage, AttributeTable
 from org.meteothink.common.projection import KnownCoordinateSystems, ProjUtil
-from org.meteothink.projection.info import ProjectionInfo
+from org.meteothink.projection import Reproject
+from org.meteothink.projection.info import ProjectionInfo, LongLat
 from org.meteothink.common import PointD
 from org.meteothink.global.util import IOUtil
+from org.meteothink.ndarray import Dimension, DimensionType
+from org.meteothink.geoprocess.analysis import ResampleMethods
 
 from milayer import MILayer
 import numjy as np
-#from mipylib.numeric.miarray import MIArray
-#from mipylib.numeric.dimarray import DimArray
+from numjy.core.multiarray import NDArray
+from numjy.core.dimarray import DimArray
 #import mipylib.migl as migl
 #import mipylib.numeric.minum as minum
 
@@ -25,7 +28,7 @@ from java.util import ArrayList
 __all__ = [
     'arrayinpolygon','circle','convert_encoding_dbf','distance','georead','geotiffread',
     'maplayer','inpolygon','maskin','maskout','polyarea','polygon','rmaskin','rmaskout','shaperead',
-    'projinfo','project','projectxy'
+    'projinfo','project','projectxy','reproject'
     ]
 
 def shaperead(fn, encoding=None):   
@@ -40,7 +43,8 @@ def shaperead(fn, encoding=None):
     if not fn.endswith('.shp'):
         fn = fn + '.shp'
     if not os.path.exists(fn):
-        fn = os.path.join(migl.get_map_folder(), fn)
+        mapfolder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../map')
+        fn = os.path.join(mapfolder, fn)
         
     if os.path.exists(fn):        
         try:
@@ -69,7 +73,8 @@ def georead(fn):
     :returns: (*MILayer*) The created layer.
     '''
     if not os.path.exists(fn):
-        fn = os.path.join(migl.mapfolder, fn)
+        mapfolder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../map')
+        fn = os.path.join(mapfolder, fn)
         
     if os.path.exists(fn):        
         try:
@@ -390,7 +395,7 @@ def projinfo(proj4string=None, proj='longlat', **kwargs):
         return ProjectionInfo.factory(proj4string)
     
     if proj == 'longlat' and len(kwargs) == 0:
-        return KnownCoordinateSystems.geographic.world.WGS1984
+        return ProjectionInfo.factory(KnownCoordinateSystems.geographic.world.WGS1984)
         
     origin = kwargs.pop('origin', (0, 0, 0))    
     lat_0 = origin[0]
@@ -428,7 +433,7 @@ def projinfo(proj4string=None, proj='longlat', **kwargs):
         
     return ProjectionInfo.factory(projstr) 
 
-def project(x, y, fromproj=KnownCoordinateSystems.geographic.world.WGS1984, toproj=KnownCoordinateSystems.geographic.world.WGS1984):
+def project(x, y, fromproj=LongLat(), toproj=LongLat()):
     """
     Project geographic coordinates from one projection to another.
     
@@ -454,6 +459,55 @@ def project(x, y, fromproj=KnownCoordinateSystems.geographic.world.WGS1984, topr
         inpt = PointD(x, y)
         outpt = Reproject.reprojectPoint(inpt, fromproj, toproj)
         return outpt.X, outpt.Y
+        
+def reproject(a, x=None, y=None, toproj=None, method='bilinear'):
+    """
+    Project array
+    
+    :param a: (*array*) Input array
+    :param x: To x coordinates.
+    :param y: To y coordinates.
+    :param toproj: To projection.
+    :param method: Interpolation method: ``bilinear`` or ``neareast`` .
+    
+    :returns: (*NDArray*) Projected array
+    """
+    yy = a.dims[a.ndim - 2].getDimValue()
+    xx = a.dims[a.ndim - 1].getDimValue()
+    fromproj = ProjectionInfo.factory(a.proj)
+    if toproj is None:
+        toproj = fromproj
+    
+    if x is None or y is None:
+        pr = Reproject.reproject(a._array, xx, yy, fromproj, toproj)
+        r = pr[0]
+        x = pr[1]
+        y = pr[2]
+        dims = a.dims
+        ydim = Dimension(DimensionType.Y)
+        ydim.setDimValues(np.NDArray(y).aslist())
+        dims[-2] = ydim
+        xdim = Dimension(DimensionType.X)
+        xdim.setDimValues(np.NDArray(x).aslist())    
+        dims[-1] = xdim
+        rr = DimArray(np.NDArray(r), dims, a.fill_value, toproj)
+        return rr
+    
+    if method == 'bilinear':
+        method = ResampleMethods.Bilinear
+    else:
+        method = ResampleMethods.NearestNeighbor
+    if isinstance(x, list):
+        r = Reproject.reproject(a._array, xx, yy, x, y, fromproj, toproj, a.fill_value, method)
+    elif isinstance(x, NDArray):
+        if x.ndim == 1:
+            r = Reproject.reproject(a._array, xx, yy, x.aslist(), y.aslist(), fromproj, toproj, a.fill_value, method)
+        else:
+            r = Reproject.reproject(a._array, xx, yy, x.asarray(), y.asarray(), fromproj, toproj, a.fill_value, method)
+    else:
+        r = Reproject.reproject(a._array, xx, yy, x.asarray(), y.asarray(), fromproj, toproj, a.fill_value, method)
+    #r = Reproject.reproject(self.array, xx, yy, x.asarray(), y.asarray(), self.proj, toproj, self.fill_value, method)
+    return NDArray(r)        
     
 def projectxy(lon, lat, xnum, ynum, dx, dy, toproj, fromproj=None, pos='lowerleft'):
     """

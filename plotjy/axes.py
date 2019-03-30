@@ -1300,7 +1300,7 @@ class Axes(object):
                 ye = []
                 for i in range(xdata.getSize()):
                     ye.append(yerr)
-                yerrB = np.array(ye).array
+                yerrB = np.array(ye)._array
                 yerrU = yerrB
             else:
                 if isinstance(yerr, (list, tuple)):
@@ -1321,7 +1321,7 @@ class Axes(object):
                 ye = []
                 for i in range(xdata.getSize()):
                     ye.append(xerr)
-                xerrL = np.array(ye).array
+                xerrL = np.array(ye)._array
                 xerrR = xerrL         
             else:
                 if isinstance(xerr, (list, tuple)):
@@ -1772,9 +1772,13 @@ class Axes(object):
         xaxistype = None
         if n <= 2:
             a = args[0]
-            yn, xn = a.shape
-            x = np.arange(xn)
-            y = np.arange(yn)            
+            if isinstance(a, DimArray):
+                y = a.dimvalue(0)
+                x = a.dimvalue(1)
+            else:
+                yn, xn = a.shape
+                x = np.arange(xn)
+                y = np.arange(yn)            
             args = args[1:]
         elif n <=4:
             x = args[0]
@@ -1886,37 +1890,26 @@ class Axes(object):
         fill_value = kwargs.pop('fill_value', -9999.0)
         xaxistype = None
         if n <= 2:
-            gdata = np.asgriddata(args[0])
-            if isinstance(args[0], DimArray):
-                if args[0].islondim(1):
-                    xaxistype = 'lon'
-                elif args[0].islatdim(1):
-                    xaxistype = 'lat'
-                elif args[0].istimedim(1):
-                    xaxistype = 'time'
+            a = args[0]
+            if isinstance(a, DimArray):
+                y = a.dimvalue(0)
+                x = a.dimvalue(1)
+            else:
+                yn, xn = a.shape
+                x = np.arange(xn)
+                y = np.arange(yn) 
             args = args[1:]
         elif n <=4:
             x = args[0]
             y = args[1]
             a = args[2]
-            gdata = np.asgriddata(a, x, y, fill_value)
             args = args[3:]
         if ls is None:
-            if len(args) > 0:
-                level_arg = args[0]
-                if isinstance(level_arg, int):
-                    cn = level_arg
-                    ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), cn, cmap)
-                else:
-                    if isinstance(level_arg, np.NDArray):
-                        level_arg = level_arg.aslist()
-                    ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), level_arg, cmap)
-            else:    
-                ls = LegendManage.createLegendScheme(gdata.min(), gdata.max(), cmap)
+            ls = plotutil.getlegendscheme(args, a.min(), a.max(), **kwargs)
         ls = ls.convertTo(ShapeTypes.Polygon)
         plotutil.setlegendscheme(ls, **kwargs)
         smooth = kwargs.pop('smooth', True)
-        igraphic = GraphicFactory.createContourPolygons(gdata.data, ls, smooth)
+        igraphic = GraphicFactory.createContourPolygons(x._array, y._array, a._array, ls, smooth)
         
         visible = kwargs.pop('visible', True)
         if visible:
@@ -2173,7 +2166,7 @@ class Axes(object):
         alb = plotutil.line2arrow(alb, **kwargs)
         if isinstance(x, np.NDArray):
             iscurve = kwargs.pop('iscurve', False)
-            graphic = GraphicFactory.createArrowLine(x.array, y.array, alb, iscurve)
+            graphic = GraphicFactory.createArrowLine(x._array, y._array, alb, iscurve)
         else:
             graphic = GraphicFactory.createArrowLine(x, y, dx, dy, alb)
             
@@ -2281,14 +2274,14 @@ class Axes(object):
             yy = []
             for i in range(dn):
                 yy.append(y1)
-            y1 = np.array(yy).array
+            y1 = np.array(yy)._array
         else:
             y1 = plotutil.getplotdata(y1)
         if isinstance(y2, (int, long, float)):
             yy = []
             for i in range(dn):
                 yy.append(y2)
-            y2 = np.array(yy).array
+            y2 = np.array(yy)._array
         else:
             y2 = plotutil.getplotdata(y2)
         if not where is None:
@@ -2329,14 +2322,14 @@ class Axes(object):
             xx = []
             for i in range(dn):
                 xx.append(x1)
-            x1 = np.array(xx).array
+            x1 = np.array(xx)._array
         else:
             x1 = plotutil.getplotdata(x1)
         if isinstance(x2, (int, long, float)):
             xx = []
             for i in range(dn):
                 xx.append(x2)
-            x2 = np.array(xx).array
+            x2 = np.array(xx)._array
         else:
             x2 = plotutil.getplotdata(x2)
         if not where is None:
