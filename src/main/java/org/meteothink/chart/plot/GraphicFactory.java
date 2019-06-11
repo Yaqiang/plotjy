@@ -30,6 +30,7 @@ import org.meteothink.layer.VectorLayer;
 import org.meteothink.legend.ArrowLineBreak;
 import org.meteothink.legend.ArrowPolygonBreak;
 import org.meteothink.legend.BarBreak;
+import org.meteothink.legend.BreakTypes;
 import org.meteothink.legend.ColorBreak;
 import org.meteothink.legend.ColorBreakCollection;
 import org.meteothink.legend.LegendManage;
@@ -1532,6 +1533,84 @@ public class GraphicFactory {
         }
 
         return graphics;
+    }
+    
+    /**
+     * Add wireframe polylines
+     *
+     * @param xa X coordinate array
+     * @param ya Y coordinate array
+     * @param za Z coordinate array
+     * @param ls Legend scheme
+     * @return Graphics
+     */
+    public static GraphicCollection createWireframe(Array xa, Array ya, Array za, LegendScheme ls) {
+        GraphicCollection3D graphics = new GraphicCollection3D();
+        int[] shape = xa.getShape();
+        int colNum = shape[1];
+        int rowNum = shape[0];
+        double z1, z2, z3, z4, z;
+        int idx1, idx2, idx3, idx4;
+        PolylineBreak pb;
+        PolylineZShape ps;
+        Graphic graphic;
+        List<PointZ> points;
+        for (int i = 0; i < rowNum - 1; i++) {
+            for (int j = 0; j < colNum - 1; j++) {
+                idx1 = i * colNum + j;
+                idx2 = i * colNum + j + 1;
+                idx3 = (i + 1) * colNum + j;
+                idx4 = (i + 1) * colNum + j + 1;
+                z1 = za.getDouble(idx1);
+                z2 = za.getDouble(idx2);
+                z3 = za.getDouble(idx3);
+                z4 = za.getDouble(idx4);
+                ps = new PolylineZShape();
+                points = new ArrayList<>();
+                points.add(new PointZ(xa.getDouble(idx1), ya.getDouble(idx1), z1));
+                points.add(new PointZ(xa.getDouble(idx3), ya.getDouble(idx3), z3));
+                ps.setPoints(points);
+                z = (z1 + z3) * 0.5;
+                ps.setValue(z);
+                pb = (PolylineBreak) ls.findLegendBreak(z);
+                graphic = new Graphic(ps, pb);
+                graphics.add(graphic);
+                ps = new PolylineZShape();
+                points = new ArrayList<>();
+                points.add(new PointZ(xa.getDouble(idx3), ya.getDouble(idx3), z3));
+                points.add(new PointZ(xa.getDouble(idx4), ya.getDouble(idx4), z4));
+                ps.setPoints(points);
+                z = (z3 + z4) * 0.5;
+                ps.setValue(z);
+                pb = (PolylineBreak) ls.findLegendBreak(z);
+                graphic = new Graphic(ps, pb);
+                graphics.add(graphic);
+                ps = new PolylineZShape();
+                points = new ArrayList<>();
+                points.add(new PointZ(xa.getDouble(idx4), ya.getDouble(idx4), z4));
+                points.add(new PointZ(xa.getDouble(idx2), ya.getDouble(idx2), z2));
+                ps.setPoints(points);
+                z = (z4 + z2) * 0.5;
+                ps.setValue(z);
+                pb = (PolylineBreak) ls.findLegendBreak(z);
+                graphic = new Graphic(ps, pb);
+                graphics.add(graphic);
+                ps = new PolylineZShape();
+                points = new ArrayList<>();
+                points.add(new PointZ(xa.getDouble(idx2), ya.getDouble(idx2), z2));
+                points.add(new PointZ(xa.getDouble(idx1), ya.getDouble(idx1), z1));
+                ps.setPoints(points);
+                z = (z1 + z2) * 0.5;
+                ps.setValue(z);
+                pb = (PolylineBreak) ls.findLegendBreak(z);
+                graphic = new Graphic(ps, pb);
+                graphics.add(graphic);
+            }
+        }        
+        graphics.setSingleLegend(false);
+        graphics.setLegendScheme(ls);
+
+         return graphics;
     }
 
     /**
@@ -4384,6 +4463,7 @@ public class GraphicFactory {
      * @param showcaps Show caps or not
      * @param showfliers Show fliers or not
      * @param showmeans Show means or not
+     * @param showmedians Show medians or not
      * @param boxBreak Box polygon break
      * @param medianBreak Meandian line break
      * @param whiskerBreak Whisker line break
@@ -4393,8 +4473,8 @@ public class GraphicFactory {
      * @return GraphicCollection
      */
     public static GraphicCollection createBox(List<Array> xdata, List<Number> positions, List<Number> widths,
-            boolean showcaps, boolean showfliers, boolean showmeans, PolygonBreak boxBreak,
-            PolylineBreak medianBreak, PolylineBreak whiskerBreak, PolylineBreak capBreak,
+            boolean showcaps, boolean showfliers, boolean showmeans, boolean showmedians, PolygonBreak boxBreak,
+            ColorBreak medianBreak, PolylineBreak whiskerBreak, PolylineBreak capBreak,
             ColorBreak meanBreak, PointBreak flierBreak) {
         GraphicCollection gc = new GraphicCollection();
         int n = xdata.size();
@@ -4467,19 +4547,27 @@ public class GraphicFactory {
             gc.add(new Graphic(pgs, boxBreak));
 
             //Add meadian line
-            pList = new ArrayList<>();
-            pList.add(new PointD(v - width * 0.5, median));
-            pList.add(new PointD(v + width * 0.5, median));
-            PolylineShape pls = new PolylineShape();
-            pls.setPoints(pList);
-            gc.add(new Graphic(pls, medianBreak));
+            if (showmedians) {
+                if (medianBreak.getBreakType() == BreakTypes.PolylineBreak) {
+                    pList = new ArrayList<>();
+                    pList.add(new PointD(v - width * 0.5, median));
+                    pList.add(new PointD(v + width * 0.5, median));
+                    PolylineShape pls = new PolylineShape();
+                    pls.setPoints(pList);
+                    gc.add(new Graphic(pls, medianBreak));
+                } else {
+                    PointShape ps = new PointShape();
+                    ps.setPoint(new PointD(v, median));
+                    gc.add(new Graphic(ps, medianBreak));
+                }
+            }
 
             //Add low whisker line
             double min = Math.max(mino, mind);
             pList = new ArrayList<>();
             pList.add(new PointD(v, q1));
             pList.add(new PointD(v, min));
-            pls = new PolylineShape();
+            PolylineShape pls = new PolylineShape();
             pls.setPoints(pList);
             gc.add(new Graphic(pls, whiskerBreak));
             //Add cap
@@ -4494,13 +4582,10 @@ public class GraphicFactory {
             //Add low fliers
             if (showfliers) {
                 if (mino > mind) {
-                    IndexIterator iterA = a.getIndexIterator();
-                    double va;
-                    while(iterA.hasNext()) {
-                        va = iterA.getDoubleNext();
-                        if (va < mino) {
+                    for (int j = 0; j < a.getSize(); j++) {
+                        if (a.getDouble(j) < mino) {
                             PointShape ps = new PointShape();
-                            ps.setPoint(new PointD(v, va));
+                            ps.setPoint(new PointD(v, a.getDouble(j)));
                             gc.add(new Graphic(ps, flierBreak));
                         }
                     }
@@ -4527,13 +4612,10 @@ public class GraphicFactory {
             //Add high fliers
             if (showfliers) {
                 if (maxo < maxd) {
-                    IndexIterator iterA = a.getIndexIterator();
-                    double va;
-                    while(iterA.hasNext()) {
-                        va = iterA.getDoubleNext();
-                        if (va > maxo) {
+                    for (int j = 0; j < a.getSize(); j++) {
+                        if (a.getDouble(j) > maxo) {
                             PointShape ps = new PointShape();
-                            ps.setPoint(new PointD(v, va));
+                            ps.setPoint(new PointD(v, a.getDouble(j)));
                             gc.add(new Graphic(ps, flierBreak));
                         }
                     }
@@ -4543,9 +4625,18 @@ public class GraphicFactory {
             //Add mean line
             if (showmeans) {
                 double mean = ArrayMath.mean(a);
-                PointShape ps = new PointShape();
-                ps.setPoint(new PointD(v, mean));
-                gc.add(new Graphic(ps, meanBreak));
+                if (meanBreak.getBreakType() == BreakTypes.PointBreak) {
+                    PointShape ps = new PointShape();
+                    ps.setPoint(new PointD(v, mean));
+                    gc.add(new Graphic(ps, meanBreak));
+                } else {
+                    pList = new ArrayList<>();
+                    pList.add(new PointD(v - width * 0.5, mean));
+                    pList.add(new PointD(v + width * 0.5, mean));
+                    pls = new PolylineShape();
+                    pls.setPoints(pList);
+                    gc.add(new Graphic(pls, meanBreak));
+                }
             }
         }
         gc.setSingleLegend(false);

@@ -20,8 +20,6 @@ from milayer import MILayer
 import numjy as np
 from numjy.core.multiarray import NDArray
 from numjy.core.dimarray import DimArray
-#import mipylib.migl as migl
-#import mipylib.numeric.minum as minum
 
 from java.util import ArrayList
 

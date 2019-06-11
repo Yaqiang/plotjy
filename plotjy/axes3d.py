@@ -260,6 +260,7 @@ class Axes3D(Axes):
         linestyle = kwargs.pop('linestyle', None)
         tickline = kwargs.pop('tickline', None)
         tickline = kwargs.pop('tickvisible', tickline)
+        tickwidth = kwargs.pop('tickwidth', None)
         ticklabel = kwargs.pop('ticklabel', None)
         minortick = kwargs.pop('minortick', False)
         minorticknum = kwargs.pop('minorticknum', 5)
@@ -287,6 +288,9 @@ class Axes3D(Axes):
                 axis.setLineStyle(linestyle)
             if not tickline is None:
                 axis.setDrawTickLine(tickline)
+            if not tickwidth is None:
+                stroke = BasicStroke(tickwidth)
+                axis.setTickStroke(stroke)
             if not ticklabel is None:
                 axis.setDrawTickLabel(ticklabel)
             axis.setMinorTickVisible(minortick)
@@ -633,7 +637,7 @@ class Axes3D(Axes):
         if len(args) == 1:
             x = args[0].dimvalue(1)
             y = args[0].dimvalue(0)
-            x, y = np.meshgrid(x, y)
+            x, y = minum.meshgrid(x, y)
             z = args[0]    
             args = args[1:]
         else:
@@ -642,8 +646,27 @@ class Axes3D(Axes):
             z = args[2]
             args = args[3:]
  
-        line = plotutil.getlegendbreak('line', **kwargs)[0]
-        graphics = GraphicFactory.createWireframe(x.asarray(), y.asarray(), z.asarray(), line)
+        zcolors = kwargs.pop('zcolors', False)
+        if not zcolors:
+            line = plotutil.getlegendbreak('line', **kwargs)[0]
+            graphics = GraphicFactory.createWireframe(x.asarray(), y.asarray(), z.asarray(), line)
+        else:
+            cmap = plotutil.getcolormap(**kwargs)
+            if len(args) > 0:
+                level_arg = args[0]
+                if isinstance(level_arg, int):
+                    cn = level_arg
+                    ls = LegendManage.createLegendScheme(z.min(), z.max(), cn, cmap)
+                else:
+                    if isinstance(level_arg, MIArray):
+                        level_arg = level_arg.aslist()
+                    ls = LegendManage.createLegendScheme(z.min(), z.max(), level_arg, cmap)
+            else:    
+                ls = LegendManage.createLegendScheme(z.min(), z.max(), cmap)
+            ls = ls.convertTo(ShapeTypes.Polyline)
+            plotutil.setlegendscheme(ls, **kwargs)
+            graphics = GraphicFactory.createWireframe(x.asarray(), y.asarray(), z.asarray(), ls)
+        
         visible = kwargs.pop('visible', True)
         if visible:
             self.add_graphic(graphics)

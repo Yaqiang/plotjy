@@ -11,7 +11,7 @@ from org.meteothink.shape import ShapeTypes, Graphic, GraphicCollection
 from org.meteothink.global import MIMath
 from org.meteothink.common import Extent
 
-from java.awt import Font, Color
+from java.awt import Font, Color, BasicStroke
 from java.awt.image import BufferedImage
 
 import numbers
@@ -587,6 +587,7 @@ class Axes(object):
         linestyle = kwargs.pop('linestyle', None)
         tickline = kwargs.pop('tickline', None)
         tickline = kwargs.pop('tickvisible', tickline)
+        tickwidth = kwargs.pop('tickwidth', None)
         ticklength = kwargs.pop('ticklength', None)
         ticklabel = kwargs.pop('ticklabel', None)
         minortick = kwargs.pop('minortick', False)
@@ -630,6 +631,9 @@ class Axes(object):
                 axis.setLineStyle(linestyle)
             if not tickline is None:
                 axis.setDrawTickLine(tickline)
+            if not tickwidth is None:
+                stroke = BasicStroke(tickwidth)
+                axis.setTickStroke(stroke)
             if not ticklength is None:
                 axis.setTickLength(ticklength)
             if not ticklabel is None:
@@ -655,6 +659,7 @@ class Axes(object):
         linestyle = kwargs.pop('linestyle', None)
         tickline = kwargs.pop('tickline', None)
         tickline = kwargs.pop('tickvisible', tickline)
+        tickwidth = kwargs.pop('tickwidth', None)
         ticklength = kwargs.pop('ticklength', None)
         ticklabel = kwargs.pop('ticklabel', None)
         minortick = kwargs.pop('minortick', False)
@@ -698,6 +703,9 @@ class Axes(object):
                 axis.setLineStyle(linestyle)
             if not tickline is None:
                 axis.setDrawTickLine(tickline)
+            if not tickwidth is None:
+                stroke = BasicStroke(tickwidth)
+                axis.setTickStroke(stroke)
             if not ticklength is None:
                 axis.setTickLength(ticklength)
             if not ticklabel is None:
@@ -1362,14 +1370,15 @@ class Axes(object):
 
         return graphics 
             
-    def bar(self, *args, **kwargs):
+    def bar(self, x, height, width=0.8, bottom=None, align='center', data=None, **kwargs):
         """
         Make a bar plot.
         
-        Make a bar plot with rectangles bounded by:
-            left, left + width, bottom, bottom + height
+        The bars are positioned at x with the given alignment. Their dimensions are given by width 
+        and height. The vertical baseline is bottom (default 0).
         
-        :param left: (*array_like*) The x coordinates of the left sides of the bars.
+        :param x: (*array_like*) The x coordinates of the bars. See also align for the alignment 
+            of the bars to the coordinates.
         :param height: (*array_like*) The height of the bars.
         :param width: (*array_like*) Optional, the widths of the bars default: 0.8.
         :param bottom: (*array_like*) Optional, the y coordinates of the bars default: None
@@ -1404,37 +1413,18 @@ class Axes(object):
         """
         #Add data series
         label = kwargs.pop('label', 'S_0')
-        xdata = None
-        autowidth = True
-        width = 0.8
-        if len(args) == 1:
-            ydata = args[0]
-        elif len(args) == 2:
-            if isinstance(args[1], (int, float)):
-                ydata = args[0]
-                width = args[1]
-                autowidth = False
-            else:
-                xdata = args[0]
-                ydata = args[1]
-        else:
-            xdata = args[0]
-            ydata = args[1]
-            width = args[2]
-            autowidth = False        
+        autowidth = False
+        x = np.asarray(x)
+        height = np.asarray(height)
+        width = np.asarray(width)
+        if align == 'center':
+            x = x - width / 2
         
-        if xdata is None:
-            xdata = []
-            for i in range(1, len(args[0]) + 1):
-                xdata.append(i)
-        xdata = plotutil.getplotdata(xdata)
-        ydata = plotutil.getplotdata(ydata)
-        width = plotutil.getplotdata(width)
         yerr = kwargs.pop('yerr', None)
         if not yerr is None:
             if not isinstance(yerr, (int, float)):
                 yerr = plotutil.getplotdata(yerr)
-        bottom = kwargs.pop('bottom', None)   
+  
         if not bottom is None:
             bottom = plotutil.getplotdata(bottom)
         
@@ -1478,11 +1468,13 @@ class Axes(object):
             barbreaks.append(lb)
             
         #Create bar graphics
+        if isinstance(width, NDArray):
+            width = width.asarray()
         if morepoints:
-            graphics = GraphicFactory.createBars1(xdata, ydata, autowidth, width, not yerr is None, yerr, \
+            graphics = GraphicFactory.createBars1(x.asarray(), height.asarray(), autowidth, width, not yerr is None, yerr, \
                 not bottom is None, bottom, barbreaks)
         else:
-            graphics = GraphicFactory.createBars(xdata, ydata, autowidth, width, not yerr is None, yerr, \
+            graphics = GraphicFactory.createBars(x.asarray(), height.asarray(), autowidth, width, not yerr is None, yerr, \
                 not bottom is None, bottom, barbreaks)        
 
         self.add_graphic(graphics)
@@ -1619,7 +1611,27 @@ class Axes(object):
 
         return barbreaks
         
-    def hist(self, x, bins=10, range=None, normed=False, cumulative=False,
+    def hist(self, x, bins=10, range=None, density=False, cumulative=False,
+            bottom=None, histtype='bar', align='mid',
+            orientation='vertical', rwidth=None, log=False, **kwargs):
+        """
+        Plot a histogram.
+        
+        :param x: (*array_like*) Input values, this takes either a single array or a sequency of arrays 
+            which are not required to be of the same length.
+        :param bins: (*int*) If an integer is given, bins + 1 bin edges are returned.
+        """
+        #Add data series
+        label = kwargs.pop('label', 'S_0')
+
+         #histogram
+        m, bins = np.histogram(x, bins=bins, density=density)
+        width = np.diff(bins)
+        barbreaks = self.bar(bins[:-1], m, width, align='center', **kwargs)
+
+         return m, bins, barbreaks
+        
+    def hist_bak(self, x, bins=10, range=None, normed=False, cumulative=False,
             bottom=None, histtype='bar', align='mid',
             orientation='vertical', rwidth=None, log=False, **kwargs):
         """
@@ -2290,10 +2302,10 @@ class Axes(object):
             where = where.asarray()
         
         #Set plot data styles
-        if not 'fill' in kwargs:
-            kwargs['fill'] = True
-        if not 'edge' in kwargs:
-            kwargs['edge'] = False
+        # if not 'fill' in kwargs:
+            # kwargs['fill'] = True
+        # if not 'edge' in kwargs:
+            # kwargs['edge'] = False
         pb, isunique = plotutil.getlegendbreak('polygon', **kwargs)
         pb.setCaption(label)
         
@@ -2338,10 +2350,10 @@ class Axes(object):
             where = where.asarray()
         
         #Set plot data styles
-        if not 'fill' in kwargs:
-            kwargs['fill'] = True
-        if not 'edge' in kwargs:
-            kwargs['edge'] = False
+        # if not 'fill' in kwargs:
+            # kwargs['fill'] = True
+        # if not 'edge' in kwargs:
+            # kwargs['edge'] = False
         pb, isunique = plotutil.getlegendbreak('polygon', **kwargs)
         pb.setCaption(label)
         
@@ -2418,7 +2430,7 @@ class Axes(object):
             return graphics[0], graphics[1], graphics[2]
         
     def boxplot(self, x, sym=None, positions=None, widths=None, color=None, showcaps=True, showfliers=True, showmeans=False, \
-            meanline=False, boxprops=None, medianprops=None, meanprops=None, whiskerprops=None, capprops=None, flierprops=None):
+            showmedians=True, meanline=False, medianline=True, boxprops=None, medianprops=None, meanprops=None, whiskerprops=None, capprops=None, flierprops=None):
         """
         Make a box and whisker plot.
         
@@ -2438,8 +2450,11 @@ class Axes(object):
         :param showcaps: (*boolean*) Show the caps on the ends of whiskers. Default is ``True``.
         :param showfliers: (*boolean*) Show the outliers beyond the caps. Defaul is ``True``.
         :param showmeans: (*boolean*) Default is ``False``. Show the mean or not.
+        :param showmedians: (*boolean*) Default is ``True``. Show the median or not.
         :param meanline: (*boolean*) Default is ``False``. If ``True`` (and showmeans is ``True``), will try to render
             the mean as a line spanning. Otherwise, means will be shown as points.
+        :param medianline: (*boolean*) Default is ``True``. If ``True`` (and showmedians is ``True``), will try to render
+            the median as a line spanning. Otherwise, medians will be shown as points.
         :param boxprops: (*dict*) Specifies the style of the box.
         :param medianprops: (*dict*) Specifies the style of the median.
         :param meanprops: (*dict*) Specifies the style of the mean.
@@ -2484,11 +2499,18 @@ class Axes(object):
             boxprops.setOutlineColor(color is None and Color.blue or color)
         else:
             boxprops = plotutil.getlegendbreak('polygon', **boxprops)[0]
-        if medianprops is None:
-            medianprops = PolylineBreak()
-            medianprops.setColor(color is None and Color.red or color)
+        if medianline:
+            if medianprops is None:
+                medianprops = PolylineBreak()
+                medianprops.setColor(color is None and Color.red or color)
+            else:
+                medianprops = plotutil.getlegendbreak('line', **medianprops)[0]
         else:
-            medianprops = plotutil.getlegendbreak('line', **medianprops)[0]
+            if medianprops is None:
+                medianprops = PointBreak()
+                medianprops.setColor(color is None and Color.blue or color)
+            else:
+                medianprops = plotutil.getlegendbreak('point', **medianprops)[0]
         if whiskerprops is None:
             whiskerprops = PolylineBreak()
             whiskerprops.setColor(color is None and Color.black or color)
@@ -2524,13 +2546,68 @@ class Axes(object):
             flierprops.setStyle(PointStyle.Plus)
         
         #Create graphics
-        graphics = GraphicFactory.createBox(x, positions, widths, showcaps, showfliers, showmeans, boxprops, \
-            medianprops, whiskerprops, capprops, meanprops, flierprops)
+        graphics = GraphicFactory.createBox(x, positions, widths, showcaps, showfliers, showmeans, \
+            showmedians, boxprops, medianprops, whiskerprops, capprops, meanprops, flierprops)
 
         self.add_graphic(graphics)
         self.axes.setAutoExtent()
 
         return graphics
+        
+    def violinplot(self, dataset, positions=None, widths=0.5, boxwidth=0.01, boxprops=None, \
+        whiskerprops=None, **kwargs):
+        """
+        Make a violin plot.
+        
+        :param dateset: (*Array or a sequence of vectors*) The input data.
+        :param positions: (*array_like*) Sets the positions of the violins. The ticks and limits are automatically 
+            set to match the positions. Defaults to range(1, N+1) where N is the number of violins to be drawn.
+        :param widths: (*scalar or array_like*) Sets the width of each box either with a scalar or a sequence. 
+            The default is 0.5, or 0.15*(distance between extreme positions), if that is smaller.   
+        :param boxwidth: (*float*) box width.
+        :param boxprops: (*dict*) Specifies the style of the box.
+        :param whiskerprops: (*dict*) Specifies the style of the whiskers.
+        
+        :returns: Violin graphics.
+        """
+        if isinstance(dataset, NDArray):
+            dataset = [dataset]
+        n = len(dataset)
+
+         if positions is None:
+            positions = np.arange(1, n+1)
+
+         graphics = []
+        pdfs = []
+        xx = []
+        max = 0
+        for data,position in zip(dataset, positions):
+            kde = np.stats.GaussianKDE(data)
+            x = np.linspace(data.min(), data.max(), 100)            
+            pdf = kde.evaluate(x)
+            pdfs.append(pdf)
+            xx.append(x)
+            if pdf.max() > max:
+                max = pdf.max()
+
+         if boxprops is None:
+            boxprops = dict(color='k',edgecolor=None)
+        if whiskerprops is None:
+            whiskerprops = whiskerprops=dict(color='k')
+        if not kwargs.has_key('color'):
+            kwargs['color'] = 'c'
+        if not kwargs.has_key('edgecolor'):
+            kwargs['edgecolor'] = 'b'
+        ratio = widths / max
+        for data,position,pdf,x in zip(dataset, positions, pdfs, xx):
+            pdf = pdf * ratio
+            self.fill_betweenx(x, position-pdf, position+pdf, **kwargs)
+            ggs = self.boxplot(data, positions=[position], widths=boxwidth, showfliers=False, \
+                showcaps=False, medianline=False, boxprops=boxprops, \
+                whiskerprops=whiskerprops, medianprops=dict(color='w',edgecolor=None))
+            graphics.extend(ggs)
+
+         return graphics
         
     def barbs(self, *args, **kwargs):
         """

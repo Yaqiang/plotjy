@@ -5,6 +5,12 @@
  */
 package org.meteothink.chart;
 
+import com.itextpdf.awt.PdfGraphics2D;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfTemplate;
+import com.itextpdf.text.pdf.PdfWriter;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -47,7 +53,6 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOInvalidTreeException;
 import javax.imageio.metadata.IIOMetadata;
-import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.stream.FileImageOutputStream;
 import javax.imageio.stream.ImageOutputStream;
@@ -67,7 +72,6 @@ import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
 import org.freehep.graphics2d.VectorGraphics;
 import org.freehep.graphicsio.emf.EMFGraphics2D;
-import org.freehep.graphicsio.pdf.PDFGraphics2D;
 import org.freehep.graphicsio.ps.PSGraphics2D;
 import org.meteothink.chart.plot.Plot;
 import org.meteothink.chart.plot.AbstractPlot2D;
@@ -76,6 +80,7 @@ import org.meteothink.chart.plot.PlotType;
 import org.meteothink.chart.plot3d.Projector;
 import org.meteothink.common.Extent;
 import org.meteothink.common.GenericFileFilter;
+import org.meteothink.image.ImageUtil;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -891,16 +896,6 @@ public class ChartPanel extends JPanel {
                 out.close();
             }
         } else if (aFile.endsWith(".eps")) {
-//            EPSGraphics2D g = new EPSGraphics2D(0.0, 0.0, width, height);
-//            paintGraphics(g);
-//            FileOutputStream file = new FileOutputStream(aFile);
-//            try {
-//                file.write(g.getBytes());
-//            } finally {
-//                file.close();
-//                g.dispose();
-//            }
-
             Properties p = new Properties();
             p.setProperty("PageSize", "A5");
             VectorGraphics g = new PSGraphics2D(new File(aFile), new Dimension(width, height));
@@ -911,12 +906,20 @@ public class ChartPanel extends JPanel {
             g.endExport();
             g.dispose();
         } else if (aFile.endsWith(".pdf")) {
-            VectorGraphics g = new PDFGraphics2D(new File(aFile), new Dimension(width, height));
-            //g.setProperties(p);
-            g.startExport();
-            this.paintGraphics(g, width, height);
-            g.endExport();
-            g.dispose();
+            try {
+                Document document = new Document(new com.itextpdf.text.Rectangle(width, height));
+                PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(aFile));
+                document.open();
+                PdfContentByte cb = writer.getDirectContent();
+                PdfTemplate pdfTemp = cb.createTemplate(width, height); 
+                Graphics2D g2 = new PdfGraphics2D(pdfTemp, width, height, true);
+                this.paintGraphics(g2, width, height);
+                g2.dispose(); 
+                cb.addTemplate(pdfTemp, 0, 0);
+                document.close();
+            } catch (DocumentException | FileNotFoundException e) {
+                e.printStackTrace();
+            }
         } else if (aFile.endsWith(".emf")) {
             VectorGraphics g = new EMFGraphics2D(new File(aFile), new Dimension(width, height));
             //g.setProperties(p);
@@ -1069,9 +1072,12 @@ public class ChartPanel extends JPanel {
     }
 
     public boolean saveImage_Jpeg(String file, int width, int height, int dpi) {
-        //BufferedImage bufferedImage = this.mapBitmap;
-        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        double scaleFactor = dpi / 72.0;
+        BufferedImage bufferedImage = new BufferedImage((int)(width * scaleFactor), (int)(height * scaleFactor), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bufferedImage.createGraphics();
+        AffineTransform at = g.getTransform();
+        at.scale(scaleFactor, scaleFactor);
+        g.setTransform(at);
         paintGraphics(g, width, height);
 
         try {
@@ -1101,6 +1107,7 @@ public class ChartPanel extends JPanel {
         } catch (Exception e) {
             return false;
         }
+        g.dispose();
 
         return true;
     }
@@ -1127,41 +1134,16 @@ public class ChartPanel extends JPanel {
      * @throws java.lang.InterruptedException
      */
     public void saveImage(String fileName, int dpi, Integer sleep) throws IOException, InterruptedException {
-        File output = new File(fileName);
-        output.delete();
-
-        String formatName = fileName.substring(fileName.lastIndexOf('.') + 1);
-        if (formatName.equals("jpg")) {
-            formatName = "jpeg";
-            saveImage_Jpeg(fileName, dpi);
-            return;
+        int width, height;
+        if (this.chartSize != null) {
+            height = this.chartSize.height;
+            width = this.chartSize.width;
+        } else {
+            width = this.getWidth();
+            height = this.getHeight();
         }
-
-        this.paintGraphics();
-        BufferedImage image = this.mapBitmap;
-        for (Iterator<ImageWriter> iw = ImageIO.getImageWritersByFormatName(formatName); iw.hasNext();) {
-            ImageWriter writer = iw.next();
-            ImageWriteParam writeParam = writer.getDefaultWriteParam();
-            ImageTypeSpecifier typeSpecifier = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_INT_RGB);
-            IIOMetadata metadata = writer.getDefaultImageMetadata(typeSpecifier, writeParam);
-            if (metadata.isReadOnly() || !metadata.isStandardMetadataFormatSupported()) {
-                continue;
-            }
-
-            setDPI(metadata, dpi);
-
-            if (sleep != null) {
-                Thread.sleep(sleep * 1000);
-            }
-            final ImageOutputStream stream = ImageIO.createImageOutputStream(output);
-            try {
-                writer.setOutput(stream);
-                writer.write(metadata, new IIOImage(image, null, metadata), writeParam);
-            } finally {
-                stream.close();
-            }
-            break;
-        }
+        
+        this.saveImage(fileName,dpi, width, height, sleep);
     }
 
     /**
@@ -1186,8 +1168,12 @@ public class ChartPanel extends JPanel {
             return;
         }
 
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        double scaleFactor = dpi / 72.0;
+        BufferedImage image = new BufferedImage((int)(width * scaleFactor), (int)(height * scaleFactor), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = image.createGraphics();
+        AffineTransform at = g.getTransform();
+        at.scale(scaleFactor, scaleFactor);
+        g.setTransform(at);
         paintGraphics(g, width, height);
         for (Iterator<ImageWriter> iw = ImageIO.getImageWritersByFormatName(formatName); iw.hasNext();) {
             ImageWriter writer = iw.next();
@@ -1198,7 +1184,7 @@ public class ChartPanel extends JPanel {
                 continue;
             }
 
-            setDPI(metadata, dpi);
+            ImageUtil.setDPI(metadata, dpi);
 
             if (sleep != null) {
                 Thread.sleep(sleep * 1000);
@@ -1212,29 +1198,9 @@ public class ChartPanel extends JPanel {
             }
             break;
         }
+        g.dispose();
     }
-
-    private void setDPI(IIOMetadata metadata, float dpi) throws IIOInvalidTreeException {
-
-        // for PMG, it's dots per millimeter
-        double dotsPerMilli = 1.0 * dpi / 10 / INCH_2_CM;
-
-        IIOMetadataNode horiz = new IIOMetadataNode("HorizontalPixelSize");
-        horiz.setAttribute("value", Double.toString(dotsPerMilli));
-
-        IIOMetadataNode vert = new IIOMetadataNode("VerticalPixelSize");
-        vert.setAttribute("value", Double.toString(dotsPerMilli));
-
-        IIOMetadataNode dim = new IIOMetadataNode("Dimension");
-        dim.appendChild(horiz);
-        dim.appendChild(vert);
-
-        IIOMetadataNode root = new IIOMetadataNode("javax_imageio_1.0");
-        root.appendChild(dim);
-
-        metadata.mergeTree("javax_imageio_1.0", root);
-    }
-
+    
     /**
      * Get view image
      *
