@@ -13,11 +13,13 @@ from org.meteothink.common import Extent
 
 from java.awt import Font, Color, BasicStroke
 from java.awt.image import BufferedImage
+from java.util import HashMap
 
 import numbers
 import datetime
 
 import numjy as np
+from numjy.core.multiarray import NDArray
 from numjy.core.dimarray import DimArray
 import plotutil
 from geolib.milayer import MILayer
@@ -1413,9 +1415,11 @@ class Axes(object):
         """
         #Add data series
         label = kwargs.pop('label', 'S_0')
-        autowidth = False
+        autowidth = False        
         x = np.asarray(x)
         height = np.asarray(height)
+        if len(x) > 1 and isinstance(width, numbers.Number) and width <= 1:
+            width = (x[1] - x[0]) * width
         width = np.asarray(width)
         if align == 'center':
             x = x - width / 2
@@ -1629,7 +1633,7 @@ class Axes(object):
         width = np.diff(bins)
         barbreaks = self.bar(bins[:-1], m, width, align='center', **kwargs)
 
-         return m, bins, barbreaks
+        return m, bins, barbreaks
         
     def hist_bak(self, x, bins=10, range=None, normed=False, cumulative=False,
             bottom=None, histtype='bar', align='mid',
@@ -2365,7 +2369,7 @@ class Axes(object):
         return pb
 
     def pie(self, x, explode=None, labels=None, colors=None, autopct=None, pctdistance=0.6, shadow=False, 
-        labeldistance=1.1, startangle=0, radius=None, hold=None, **kwargs):
+        labeldistance=1.1, startangle=0, radius=None, wedgeprops=None, **kwargs):
         """
         Plot a pie chart.
         
@@ -2388,7 +2392,8 @@ class Axes(object):
         :param shadow: (*boolean*) Draw a shadow beneath the pie.
         :param startangle: (*float*) If not *0*, rotates the start of the pie chart by *angle* degrees
             counterclockwise from the x-axis.
-        :radius: (*float*) The radius of the pie, if *radius* is *None* it will be set to 1.
+        :param radius: (*float*) The radius of the pie, if *radius* is *None* it will be set to 1.
+        :param wedgeprops: (*dict*) Dict of arguments passed to the wedge objects making the pie. 
         :param fontname: (*string*) Font name. Default is ``Arial`` .
         :param fontsize: (*int*) Font size. Default is ``14`` .
         
@@ -2397,7 +2402,8 @@ class Axes(object):
         n = len(x)
         x = plotutil.getplotdata(x)
         if colors is None:
-            colors = plotutil.makecolors(n)
+            cmap = kwargs.pop('cmap', 'matlab_jet')
+            colors = plotutil.makecolors(n, cmap=cmap)
         else:
             colors = plotutil.getcolors(colors)
             
@@ -2410,10 +2416,27 @@ class Axes(object):
         else:
             font = Font(fontname, Font.PLAIN, fontsize)
         fontcolor = plotutil.getcolor(fontcolor)
+        if radius is None:
+            radius = 1
+        if wedgeprops is None:
+            wedgeprops = HashMap()
+        else:
+            jmap = HashMap()
+            for key in wedgeprops.keys():
+                value = wedgeprops[key]
+                if key == 'edgecolor':
+                    if value is None:
+                        jmap['drawedge'] = False
+                    else:
+                        value = plotutil.getcolor(value)
+                        jmap[key] = value
+                else:
+                    jmap[key] = value
+            wedgeprops = jmap
         
         #Create graphics
         graphics = GraphicFactory.createPieArcs(x, colors, labels, startangle, explode, font, fontcolor, \
-            labeldistance, autopct, pctdistance)
+            labeldistance, autopct, pctdistance, radius, wedgeprops)
 
         for graphic in graphics:
             self.add_graphic(graphic)
@@ -2424,10 +2447,7 @@ class Axes(object):
         self.axes.getAxis(Location.TOP).setVisible(False)
         self.axes.getAxis(Location.RIGHT).setVisible(False)
 
-        if len(graphics) == 2:
-            return graphics[0], graphics[1]
-        else:
-            return graphics[0], graphics[1], graphics[2]
+        return tuple(graphics)
         
     def boxplot(self, x, sym=None, positions=None, widths=None, color=None, showcaps=True, showfliers=True, showmeans=False, \
             showmedians=True, meanline=False, medianline=True, boxprops=None, medianprops=None, meanprops=None, whiskerprops=None, capprops=None, flierprops=None):
@@ -2574,10 +2594,10 @@ class Axes(object):
             dataset = [dataset]
         n = len(dataset)
 
-         if positions is None:
+        if positions is None:
             positions = np.arange(1, n+1)
 
-         graphics = []
+        graphics = []
         pdfs = []
         xx = []
         max = 0
@@ -2590,7 +2610,7 @@ class Axes(object):
             if pdf.max() > max:
                 max = pdf.max()
 
-         if boxprops is None:
+        if boxprops is None:
             boxprops = dict(color='k',edgecolor=None)
         if whiskerprops is None:
             whiskerprops = whiskerprops=dict(color='k')
@@ -2607,7 +2627,7 @@ class Axes(object):
                 whiskerprops=whiskerprops, medianprops=dict(color='w',edgecolor=None))
             graphics.extend(ggs)
 
-         return graphics
+        return graphics
         
     def barbs(self, *args, **kwargs):
         """
