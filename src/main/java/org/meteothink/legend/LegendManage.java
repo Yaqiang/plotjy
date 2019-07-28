@@ -138,7 +138,7 @@ public class LegendManage {
         double MinData;
         double MaxData;
         double[] minmax = new double[2];
-        boolean hasNoData = ContourDraw.getMinMaxValueFDiscreteData(stationData.data, stationData.missingValue, minmax);
+        boolean hasNoData = ContourDraw.getMinMaxValueFDiscreteData(stationData.getAllData(), stationData.missingValue, minmax);
         MinData = minmax[0];
         MaxData = minmax[1];
         CValues = createContourValues(MinData, MaxData);

@@ -25,14 +25,16 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.meteothink.geoprocess.GeoComputation;
-import org.meteothink.util.DataConvert;
 import org.meteothink.common.PointD;
 import org.meteothink.layer.VectorLayer;
+import org.meteothink.math.ArrayMath;
 import org.meteothink.projection.info.ProjectionInfo;
 import org.meteothink.projection.Reproject;
 import org.meteothink.shape.PolygonShape;
 import org.meteothink.shape.ShapeTypes;
 import org.meteothink.ndarray.Array;
+import org.meteothink.ndarray.DataType;
+import org.meteothink.ndarray.DimArray;
 
 /**
  * Template
@@ -44,12 +46,10 @@ public class StationData {
     /// <summary>
     /// station data: longitude, latitude, value
     /// </summary>
-
-    public double[][] data;
-    /// <summary>
-    /// Station identifer list
-    /// </summary>
-    public List<String> stations;
+    private Array data;
+    private Array xArray;
+    private Array yArray;
+    private Array stations;
     /// <summary>
     /// Data extent
     /// </summary>
@@ -69,10 +69,21 @@ public class StationData {
      * Constructor
      */
     public StationData() {
-        data = new double[0][3];
-        stations = new ArrayList<>();
         dataExtent = new Extent();
         missingValue = -9999;
+    }
+    
+    /**
+     * Constructor
+     * @param n Station number
+     */
+    public StationData(int n) {
+        this();
+        int[] shape = new int[]{n};
+        this.data = Array.factory(DataType.DOUBLE, shape);
+        this.xArray = Array.factory(DataType.DOUBLE, shape);
+        this.yArray = Array.factory(DataType.DOUBLE, shape);
+        this.stations = Array.factory(DataType.STRING, shape);
     }
 
     /**
@@ -84,20 +95,30 @@ public class StationData {
      * @param missingv Missing value
      */
     public StationData(Array a, Array x, Array y, Number missingv) {
+        this.data = a;
+        this.xArray = x;
+        this.yArray = y;
         int n = (int) a.getSize();
         this.missingValue = missingv.doubleValue();
-        stations = new ArrayList<>();
+        stations = Array.factory(DataType.STRING, a.getShape());
         dataExtent = new Extent();
-        data = new double[n][3];
         for (int i = 0; i < n; i++) {
-            stations.add("s_" + String.valueOf(i + 1));
-            data[i][0] = x.getDouble(i);
-            data[i][1] = y.getDouble(i);
-            data[i][2] = a.getDouble(i);
-            if (Double.isNaN(data[i][2]))
-                data[i][2] = missingv.doubleValue();
-            //this.addData("s_" + String.valueOf(i + 1), x.getDouble(i), y.getDouble(i), a.getDouble(i));
+            stations.setString(i, "s_" + String.valueOf(i + 1));
         }
+        this.updateExtent();
+    }
+    
+    /**
+     * Constructor
+     * @param a DimArray
+     */
+    public StationData(DimArray a) {
+        this();
+        this.data = a.getArray();
+        this.xArray = a.getDimension(1).getDimArray();
+        this.yArray = a.getDimension(0).getDimArray();
+        this.stations = Array.factory(DataType.STRING, a.getArray().getShape());
+        this.updateExtent();
     }
 
     /**
@@ -107,14 +128,12 @@ public class StationData {
      */
     public StationData(StationData aStData) {
         projInfo = aStData.projInfo;
-        stations = aStData.stations;
-        dataExtent = aStData.dataExtent;
+        stations = aStData.stations.copy();
+        dataExtent = (Extent)aStData.dataExtent.clone();
         missingValue = aStData.missingValue;
-        data = new double[aStData.data.length][aStData.data[0].length];
-        for (int i = 0; i < aStData.getStNum(); i++) {
-            data[i][0] = aStData.data[i][0];
-            data[i][1] = aStData.data[i][1];
-        }
+        this.data = aStData.data.copy();
+        this.xArray = aStData.xArray.copy();
+        this.yArray = aStData.yArray.copy();
     }
     // </editor-fold>
     // <editor-fold desc="Get Set Methods">
@@ -125,7 +144,10 @@ public class StationData {
      * @return Station number
      */
     public int getStNum() {
-        return data.length;
+        if (this.data == null)
+            return 0;
+        else
+            return (int)data.getSize();
     }
 
     /**
@@ -133,41 +155,16 @@ public class StationData {
      *
      * @return X array
      */
-    public double[] getX() {
-        double[] x = new double[getStNum()];
-        for (int i = 0; i < getStNum(); i++) {
-            x[i] = data[i][0];
-        }
-
-        return x;
+    public Array getX() {
+        return this.xArray;
     }
     
     /**
-     * Get X coordinates array
-     *
-     * @return X array
+     * Set X coordinates array
+     * @param value X array
      */
-    public List<Double> getXList() {
-        List<Double> x = new ArrayList<>();
-        for (int i = 0; i < getStNum(); i++) {
-            x.add(data[i][0]);
-        }
-
-        return x;
-    }
-
-    /**
-     * Get Y coordinates array
-     *
-     * @return Y array
-     */
-    public double[] getY() {
-        double[] y = new double[getStNum()];
-        for (int i = 0; i < getStNum(); i++) {
-            y[i] = data[i][1];
-        }
-
-        return y;
+    public void setX(Array value) {
+        this.xArray = value;
     }
     
     /**
@@ -175,22 +172,77 @@ public class StationData {
      *
      * @return Y array
      */
-    public List<Double> getYList() {
-        List<Double> y = new ArrayList<>();
-        for (int i = 0; i < getStNum(); i++) {
-            y.add(data[i][1]);
-        }
-
-        return y;
+    public Array getY() {
+        return this.yArray;
     }
-
+    
+    /**
+     * Set Y coordinate array
+     * @param value Y array
+     */
+    public void setY(Array value) {
+        this.yArray = value;
+    }
+    
+    /**
+     * Get stations array
+     * @return Stations array
+     */
+    public Array getStations() {
+        return this.stations;
+    }
+    
+    /**
+     * Set stations array
+     * @param value Stations array
+     */
+    public void setStations(Array value) {
+        this.stations = value;
+    }
+    
+    /**
+     * Get data array
+     * @return data array
+     */
+    public Array getData() {
+        return this.data;
+    }
+    
+    /**
+     * Get data with x, y and value
+     * @return All data
+     */
+    public double[][] getAllData() {
+        int n = this.getStNum();
+        double[][] r = new double[n][3];
+        for (int i = 0; i < n; i++) {
+            r[i][0] = this.xArray.getDouble(i);
+            r[i][1] = this.yArray.getDouble(i);
+            r[i][2] = this.data.getDouble(i);
+        }
+        
+        return r;
+    }
+    
+    /**
+     * Set data array
+     * @param value data array
+     */
+    public void setData(Array value) {
+        this.data = value;
+    }
+        
     /**
      * Set data array
      *
-     * @param value Data array
+     * @param data Data array
+     * @param x X array
+     * @param y Y array
      */
-    public void setData(double[][] value) {
-        data = value;
+    public void setData(Array data, Array x, Array y) {
+        this.data = data;
+        this.xArray = x;
+        this.yArray = y;
         this.updateExtent();
     }
     // </editor-fold>
@@ -213,20 +265,21 @@ public class StationData {
         String aStid;
         int stIdx;
         double x, y;
-        for (int i = 0; i < stations.size(); i++) {
-            aStid = stations.get(i);
+        List bStations = java.util.Arrays.asList(bStData.stations.getStorage());
+        for (int i = 0; i < stations.getSize(); i++) {
+            aStid = stations.getString(i);
             if (aStid.equals("99999")) {
                 continue;
             }
 
-            double aValue = this.getValue(i);
+            double aValue = this.getData(i);
             if (aValue == missingValue) {
                 continue;
             }
 
-            stIdx = bStData.stations.indexOf(aStid);
+            stIdx = bStations.indexOf(aStid);
             if (stIdx >= 0) {
-                double bValue = bStData.getValue(stIdx);
+                double bValue = bStData.getData(stIdx);
                 if (bValue == bStData.missingValue) {
                     continue;
                 }
@@ -249,20 +302,11 @@ public class StationData {
     public StationData add(double value) {
         StationData cStData = new StationData();
         cStData.projInfo = this.projInfo;
-        String aStid;
-        double x, y;
-        for (int i = 0; i < stations.size(); i++) {
-            aStid = stations.get(i);
-
-            double aValue = this.getValue(i);
-            x = this.getX(i);
-            y = this.getY(i);
-            if (MIMath.doubleEquals(aValue, missingValue)) {
-                cStData.addData(aStid, x, y, aValue);
-            } else {
-                cStData.addData(aStid, x, y, aValue + value);
-            }
-        }
+        cStData.stations = this.stations.copy();
+        cStData.xArray = this.xArray.copy();
+        cStData.yArray = this.yArray.copy();
+        cStData.dataExtent = (Extent)this.dataExtent.clone();
+        cStData.data = ArrayMath.add(this.data, value);        
 
         return cStData;
     }
@@ -282,20 +326,21 @@ public class StationData {
         String aStid;
         int stIdx;
         double x, y;
-        for (int i = 0; i < stations.size(); i++) {
-            aStid = stations.get(i);
+        List bStations = java.util.Arrays.asList(bStData.stations.getStorage());
+        for (int i = 0; i < stations.getSize(); i++) {
+            aStid = stations.getString(i);
             if (aStid.equals("99999")) {
                 continue;
             }
 
-            double aValue = this.getValue(i);
+            double aValue = this.getData(i);
             if (aValue == missingValue) {
                 continue;
             }
 
-            stIdx = bStData.stations.indexOf(aStid);
+            stIdx = bStations.indexOf(aStid);
             if (stIdx >= 0) {
-                double bValue = bStData.getValue(stIdx);
+                double bValue = bStData.getData(stIdx);
                 if (bValue == bStData.missingValue) {
                     continue;
                 }
@@ -317,20 +362,12 @@ public class StationData {
      */
     public StationData sub(double value) {
         StationData cStData = new StationData();
-        String aStid;
-        double x, y;
-        for (int i = 0; i < stations.size(); i++) {
-            aStid = stations.get(i);
-
-            double aValue = this.getValue(i);
-            x = this.getX(i);
-            y = this.getY(i);
-            if (MIMath.doubleEquals(aValue, missingValue)) {
-                cStData.addData(aStid, x, y, aValue);
-            } else {
-                cStData.addData(aStid, x, y, aValue - value);
-            }
-        }
+        cStData.projInfo = this.projInfo;
+        cStData.stations = this.stations.copy();
+        cStData.xArray = this.xArray.copy();
+        cStData.yArray = this.yArray.copy();
+        cStData.dataExtent = (Extent)this.dataExtent.clone();
+        cStData.data = ArrayMath.sub(this.data, value);  
 
         return cStData;
     }
@@ -350,20 +387,21 @@ public class StationData {
         String aStid;
         int stIdx;
         double x, y;
-        for (int i = 0; i < stations.size(); i++) {
-            aStid = stations.get(i);
+        List bStations = java.util.Arrays.asList(bStData.stations.getStorage());
+        for (int i = 0; i < stations.getSize(); i++) {
+            aStid = stations.getString(i);
             if (aStid.equals("99999")) {
                 continue;
             }
 
-            double aValue = this.getValue(i);
+            double aValue = this.getData(i);
             if (aValue == missingValue) {
                 continue;
             }
 
-            stIdx = bStData.stations.indexOf(aStid);
+            stIdx = bStations.indexOf(aStid);
             if (stIdx >= 0) {
-                double bValue = bStData.getValue(stIdx);
+                double bValue = bStData.getData(stIdx);
                 if (bValue == bStData.missingValue) {
                     continue;
                 }
@@ -385,20 +423,12 @@ public class StationData {
      */
     public StationData mul(double value) {
         StationData cStData = new StationData();
-        String aStid;
-        double x, y;
-        for (int i = 0; i < stations.size(); i++) {
-            aStid = stations.get(i);
-
-            double aValue = this.getValue(i);
-            x = this.getX(i);
-            y = this.getY(i);
-            if (MIMath.doubleEquals(aValue, missingValue)) {
-                cStData.addData(aStid, x, y, aValue);
-            } else {
-                cStData.addData(aStid, x, y, aValue * value);
-            }
-        }
+        cStData.projInfo = this.projInfo;
+        cStData.stations = this.stations.copy();
+        cStData.xArray = this.xArray.copy();
+        cStData.yArray = this.yArray.copy();
+        cStData.dataExtent = (Extent)this.dataExtent.clone();
+        cStData.data = ArrayMath.mul(this.data, value);  
 
         return cStData;
     }
@@ -418,20 +448,21 @@ public class StationData {
         String aStid;
         int stIdx;
         double x, y;
-        for (int i = 0; i < stations.size(); i++) {
-            aStid = stations.get(i);
+        List bStations = java.util.Arrays.asList(bStData.stations.getStorage());
+        for (int i = 0; i < stations.getSize(); i++) {
+            aStid = stations.getString(i);
             if (aStid.equals("99999")) {
                 continue;
             }
 
-            double aValue = this.getValue(i);
+            double aValue = this.getData(i);
             if (aValue == missingValue) {
                 continue;
             }
 
-            stIdx = bStData.stations.indexOf(aStid);
+            stIdx = bStations.indexOf(aStid);
             if (stIdx >= 0) {
-                double bValue = bStData.getValue(stIdx);
+                double bValue = bStData.getData(stIdx);
                 if (bValue == bStData.missingValue) {
                     continue;
                 }
@@ -453,20 +484,12 @@ public class StationData {
      */
     public StationData div(double value) {
         StationData cStData = new StationData();
-        String aStid;
-        double x, y;
-        for (int i = 0; i < stations.size(); i++) {
-            aStid = stations.get(i);
-
-            double aValue = this.getValue(i);
-            x = this.getX(i);
-            y = this.getY(i);
-            if (MIMath.doubleEquals(aValue, missingValue)) {
-                cStData.addData(aStid, x, y, aValue);
-            } else {
-                cStData.addData(aStid, x, y, aValue / value);
-            }
-        }
+        cStData.projInfo = this.projInfo;
+        cStData.stations = this.stations.copy();
+        cStData.xArray = this.xArray.copy();
+        cStData.yArray = this.yArray.copy();
+        cStData.dataExtent = (Extent)this.dataExtent.clone();
+        cStData.data = ArrayMath.div(this.data, value);  
 
         return cStData;
     }
@@ -481,13 +504,7 @@ public class StationData {
      */
     public StationData abs() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.abs(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.abs(this.data);  
 
         return stationData;
     }
@@ -499,13 +516,7 @@ public class StationData {
      */
     public StationData acos() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.acos(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.acos(this.data);
 
         return stationData;
     }
@@ -517,13 +528,7 @@ public class StationData {
      */
     public StationData asin() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.asin(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.asin(this.data);
 
         return stationData;
     }
@@ -535,13 +540,7 @@ public class StationData {
      */
     public StationData atan() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.atan(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.atan(this.data);
 
         return stationData;
     }
@@ -553,13 +552,7 @@ public class StationData {
      */
     public StationData cos() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.cos(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.cos(this.data);
 
         return stationData;
     }
@@ -571,13 +564,7 @@ public class StationData {
      */
     public StationData sin() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.sin(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.sin(this.data);
 
         return stationData;
     }
@@ -589,13 +576,7 @@ public class StationData {
      */
     public StationData tan() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.tan(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.tan(this.data);
 
         return stationData;
     }
@@ -607,13 +588,7 @@ public class StationData {
      */
     public StationData exp() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.exp(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.exp(this.data);
 
         return stationData;
     }
@@ -626,13 +601,7 @@ public class StationData {
      */
     public StationData pow(double p) {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.pow(getValue(i), p));
-            }
-        }
+        stationData.data = ArrayMath.pow(this.data, p);
 
         return stationData;
     }
@@ -644,13 +613,7 @@ public class StationData {
      */
     public StationData sqrt() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.sqrt(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.sqrt(this.data);
 
         return stationData;
     }
@@ -662,13 +625,7 @@ public class StationData {
      */
     public StationData log() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.log(getValue(i)));
-            }
-        }
+        stationData.data = ArrayMath.log(this.data);
 
         return stationData;
     }
@@ -680,13 +637,7 @@ public class StationData {
      */
     public StationData log10() {
         StationData stationData = new StationData(this);
-        for (int i = 0; i < stationData.getStNum(); i++) {
-            if (MIMath.doubleEquals(getValue(i), missingValue)) {
-                stationData.setValue(i, missingValue);
-            } else {
-                stationData.setValue(i, Math.log10(getValue(i)));
-            }
-        }
+       stationData.data = ArrayMath.log10(this.data);
 
         return stationData;
     }
@@ -702,18 +653,17 @@ public class StationData {
      * @param value Value
      */
     public void addData(String id, double x, double y, double value) {
-        stations.add(id);
-        int newSize = data.length + 1;
-        if (data.length == 0) {
-            data = new double[1][3];
-        } else {
-            data = DataConvert.resizeArray2D(data, newSize);
-        }
-        data[newSize - 1][0] = x;
-        data[newSize - 1][1] = y;
-        data[newSize - 1][2] = value;
+        int n = this.getStNum();
+        this.stations = this.stations.reshapeVLen(new int[]{n + 1});
+        this.xArray = this.xArray.reshapeVLen(new int[]{n + 1});
+        this.yArray = this.yArray.reshapeVLen(new int[]{n + 1});
+        this.data = this.data.reshapeVLen(new int[]{n + 1});
+        stations.setString(n, id);
+        this.xArray.setDouble(n, x);
+        this.yArray.setDouble(n, y);
+        this.data.setDouble(n, value);
 
-        if (newSize == 1) {
+        if (n + 1 == 1) {
             dataExtent.minX = x;
             dataExtent.maxX = x;
             dataExtent.minY = y;
@@ -741,7 +691,7 @@ public class StationData {
      * @return Station identifer
      */
     public String getStid(int idx) {
-        return stations.get(idx);
+        return stations.getString(idx);
     }
 
     /**
@@ -751,7 +701,7 @@ public class StationData {
      * @param value Station identifer
      */
     public void setStid(int idx, String value) {
-        stations.set(idx, value);
+        stations.setString(idx, value);
     }
 
     /**
@@ -761,7 +711,16 @@ public class StationData {
      * @return X coordinate
      */
     public double getX(int idx) {
-        return data[idx][0];
+        return this.xArray.getDouble(idx);
+    }
+    
+    /**
+     * Set x value by index
+     * @param idx index
+     * @param value x value
+     */
+    public void setX(int idx, double value) {
+        this.xArray.setDouble(idx, value);
     }
 
     /**
@@ -771,17 +730,25 @@ public class StationData {
      * @return Y coordinate
      */
     public double getY(int idx) {
-        return data[idx][1];
+        return this.yArray.getDouble(idx);
     }
-
+    
+    /**
+     * Set y value by index
+     * @param idx index
+     * @param value y value
+     */
+    public void setY(int idx, double value) {
+        this.yArray.setDouble(idx, value);
+    }
+    
     /**
      * Get data value by index
-     *
-     * @param idx Index
+     * @param idx index
      * @return Data value
      */
-    public double getValue(int idx) {
-        return data[idx][2];
+    public double getData(int idx) {
+        return this.data.getDouble(idx);
     }
 
     /**
@@ -790,19 +757,19 @@ public class StationData {
      * @param idx Index
      * @param value Data value
      */
-    public void setValue(int idx, double value) {
-        data[idx][2] = value;
+    public void setData(int idx, double value) {
+        this.data.setDouble(idx, value);
     }
     
     /**
      * Get values
      * @return Values
      */
-    public List<Double> getValues(){
+    public List<Double> getDatas(){
         List<Double> values = new ArrayList<>();
         double v;
         for (int i = 0; i <this.getStNum(); i++){
-            v = this.getValue(i);
+            v = this.getData(i);
             if (MIMath.doubleEquals(v, this.missingValue)){
                 values.add(Double.NaN);
             } else {
@@ -821,7 +788,7 @@ public class StationData {
         List<Double> values = new ArrayList<>();
         double v;
         for (int i = 0; i <this.getStNum(); i++){
-            v = this.getValue(i);
+            v = this.getData(i);
             if (!MIMath.doubleEquals(v, this.missingValue)){                
                 values.add(v);
             }           
@@ -835,8 +802,8 @@ public class StationData {
      * @param stid Station identifer
      * @return Data index
      */
-    public int indexOf(int stid){
-        return this.stations.indexOf(stid);
+    public int indexOf(String stid){
+        return java.util.Arrays.asList(this.stations.getStorage()).indexOf(stid);
     }
 
     /**
@@ -864,13 +831,13 @@ public class StationData {
             sw.write(aStr);
             for (int i = 0; i < this.getStNum(); i++) {
                 if (!saveMissingData) {
-                    if (MIMath.doubleEquals(this.getValue(i), missingValue)) {
+                    if (MIMath.doubleEquals(this.getData(i), missingValue)) {
                         continue;
                     }
                 }
 
-                aStr = stations.get(i) + "," + String.valueOf(this.getX(i)) + "," + String.valueOf(this.getY(i))
-                        + "," + String.valueOf(this.getValue(i));
+                aStr = stations.getString(i) + "," + String.valueOf(this.getX(i)) + "," + String.valueOf(this.getY(i))
+                        + "," + String.valueOf(this.getData(i));
                 sw.newLine();
                 sw.write(aStr);
             }
@@ -893,7 +860,7 @@ public class StationData {
         stData.missingValue = this.missingValue;
         for (int i = 0; i < this.getStNum(); i++) {
             if (GeoComputation.pointInPolygon(polygonShape, new PointD(this.getX(i), this.getY(i)))) {
-                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getValue(i));
+                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getData(i));
             }
         }
 
@@ -912,7 +879,7 @@ public class StationData {
         stData.missingValue = this.missingValue;
         for (int i = 0; i < this.getStNum(); i++) {
             if (GeoComputation.pointInPolygons(polygonShapes, new PointD(this.getX(i), this.getY(i)))) {
-                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getValue(i));
+                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getData(i));
             }
         }
 
@@ -946,7 +913,7 @@ public class StationData {
         stData.missingValue = this.missingValue;
         for (int i = 0; i < this.getStNum(); i++) {
             if (!GeoComputation.pointInPolygon(polygonShape, new PointD(this.getX(i), this.getY(i)))) {
-                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getValue(i));
+                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getData(i));
             }
         }
 
@@ -965,7 +932,7 @@ public class StationData {
         stData.missingValue = this.missingValue;
         for (int i = 0; i < this.getStNum(); i++) {
             if (!GeoComputation.pointInPolygons(polygonShapes, new PointD(this.getX(i), this.getY(i)))) {
-                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getValue(i));
+                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getData(i));
             }
         }
 
@@ -999,7 +966,7 @@ public class StationData {
         stData.missingValue = this.missingValue;
         for (int i = 0; i < this.getStNum(); i++) {
             if (stations.contains(this.getStid(i))) {
-                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getValue(i));
+                stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getData(i));
             }
         }
 
@@ -1014,12 +981,10 @@ public class StationData {
      */
     public StationData join(StationData indata) {
         StationData stData = new StationData(this);
-        for (int i = 0; i < this.getStNum(); i++) {
-            stData.addData(this.getStid(i), this.getX(i), this.getY(i), this.getValue(i));
-        }
+        List bStations = java.util.Arrays.asList(stData.stations.getStorage());
         for (int i = 0; i < indata.getStNum(); i++) {
-            if (!stData.stations.contains(indata.getStid(i))) {
-                stData.addData(indata.getStid(i), indata.getX(i), indata.getY(i), indata.getValue(i));
+            if (!bStations.contains(indata.getStid(i))) {
+                stData.addData(indata.getStid(i), indata.getX(i), indata.getY(i), indata.getData(i));
             }
         }
 
@@ -1047,7 +1012,7 @@ public class StationData {
                 x = points[0][0];
                 y = points[0][1];
 
-                nsData.addData(this.getStid(i), x, y, this.getValue(i));
+                nsData.addData(this.getStid(i), x, y, this.getData(i));
             } catch (Exception e) {
                 i++;
             }
@@ -1088,8 +1053,8 @@ public class StationData {
         maxY = 0;
         double lon, lat;
         for (int i = 0; i < stNum; i++) {
-            lon = data[i][0];
-            lat = data[i][1];
+            lon = this.xArray.getDouble(i);
+            lat = this.yArray.getDouble(i);
             if (i == 0) {
                 minX = lon;
                 maxX = minX;
@@ -1129,24 +1094,25 @@ public class StationData {
         List<double[]> values = createGridXY(interSet.getGridDataSetting());
         X = values.get(0);
         Y = values.get(1);
+        double[][] aData = this.getAllData();
         switch (interSet.getInterpolationMethod()) {
             case IDW_Radius:
                 this.filterData_Radius(interSet.getRadius(), interSet.getGridDataSetting().dataExtent);
-                aGridData = interpolate_Radius(data,
+                aGridData = interpolate_Radius(aData,
                         X, Y, interSet.getMinPointNum(), interSet.getRadius(), missingValue);
                 break;
             case IDW_Neighbors:
                 this.filterData_Radius(interSet.getRadius(), interSet.getGridDataSetting().dataExtent);
-                aGridData = interpolate_Neighbor(data, X, Y,
+                aGridData = interpolate_Neighbor(aData, X, Y,
                         interSet.getMinPointNum(), missingValue);
                 break;
             case Cressman:
                 this.filterData_Radius(0, interSet.getGridDataSetting().dataExtent);
-                aGridData = interpolate_Cressman(data, X, Y, interSet.getRadiusList(), missingValue);
+                aGridData = interpolate_Cressman(aData, X, Y, interSet.getRadiusList(), missingValue);
                 break;
             case AssignPointToGrid:
                 this.filterData_Radius(0, interSet.getGridDataSetting().dataExtent);
-                aGridData = interpolate_Assign(data, X, Y, missingValue);
+                aGridData = interpolate_Assign(aData, X, Y, missingValue);
                 break;
         }
 
@@ -1199,7 +1165,7 @@ public class StationData {
             nY[i] = Y.get(i).doubleValue();
         }
         
-        return this.interpolate_Radius(data, nX, nY, minPNum, radius, missingValue);
+        return this.interpolate_Radius(this.getAllData(), nX, nY, minPNum, radius, missingValue);
     }
 
     /**
@@ -1243,7 +1209,7 @@ public class StationData {
             nY[i] = Y.get(i).doubleValue();
         }
         
-        return this.interpolate_Neighbor(data, nX, nY, pNum, missingValue);
+        return this.interpolate_Neighbor(this.getAllData(), nX, nY, pNum, missingValue);
     }
 
     /**
@@ -1293,7 +1259,7 @@ public class StationData {
         for (Number r : radList){
             rlist.add(r.doubleValue());
         }
-        return this.interpolate_Cressman(data, nX, nY, rlist, missingValue);
+        return this.interpolate_Cressman(this.getAllData(), nX, nY, rlist, missingValue);
     }
 
     /**
@@ -1335,7 +1301,7 @@ public class StationData {
             nY[i] = Y.get(i).doubleValue();
         }
 
-        return this.interpolate_Assign(data, nX, nY, missingValue);
+        return this.interpolate_Assign(this.getAllData(), nX, nY, missingValue);
     }
 
     /**
@@ -1359,34 +1325,41 @@ public class StationData {
      * @param aExtent Data extent
      */
     public void filterData_Radius(double radius, Extent aExtent) {
-        double[][] discretedData;
-        List<double[]> disDataList = new ArrayList<double[]>();
-        List<String> nstations = new ArrayList<String>();
+        List<double[]> disDataList = new ArrayList<>();
+        List<String> nstations = new ArrayList<>();
         int i;
+        double x, y, v;
         for (i = 0; i < this.getStNum(); i++) {
-            if (MIMath.doubleEquals(data[i][2], missingValue)) {
+            v = this.data.getDouble(i);
+            x = this.xArray.getDouble(i);
+            y = this.yArray.getDouble(i);
+            if (MIMath.doubleEquals(v, missingValue)) {
                 continue;
             }
-            if (data[i][0] + radius < aExtent.minX || data[i][0] - radius > aExtent.maxX
-                    || data[i][1] + radius < aExtent.minY || data[i][1] - radius > aExtent.maxY) {
+            if (x + radius < aExtent.minX || x - radius > aExtent.maxX
+                    || y + radius < aExtent.minY || y - radius > aExtent.maxY) {
                 continue;
             } else {
-                disDataList.add(new double[]{data[i][0], data[i][1], data[i][2]});
-                nstations.add(this.stations.get(i));
+                disDataList.add(new double[]{x, y, v});
+                nstations.add(this.stations.getString(i));
             }
         }
 
-        discretedData = new double[disDataList.size()][3];
-        i = 0;
-        for (double[] disData : disDataList) {
-            discretedData[i][0] = disData[0];
-            discretedData[i][1] = disData[1];
-            discretedData[i][2] = disData[2];
-            i += 1;
+        int n = nstations.size();
+        int[] shape = new int[]{n};
+        Array x1 = Array.factory(this.xArray.getDataType(), shape);
+        Array y1 = Array.factory(this.yArray.getDataType(), shape);
+        Array data1 = Array.factory(this.data.getDataType(), shape);
+        Array station1 = Array.factory(this.stations.getDataType(), shape);
+        for (i = 0; i < n; i++) {
+            x1.setDouble(i, disDataList.get(i)[0]);
+            y1.setDouble(i, disDataList.get(i)[1]);
+            data1.setDouble(i, disDataList.get(i)[2]);
+            station1.setString(i, nstations.get(i));
         }
 
-        this.setData(discretedData);
-        stations = nstations;
+        this.setData(data1, x1, y1);
+        stations = station1;
     }
     // </editor-fold>
     // <editor-fold desc="Statictics">
@@ -1418,17 +1391,19 @@ public class StationData {
         double min = 0;
         int vdNum = 0;
         int idx = 0;
+        double v;
         for (int i = 0; i < this.getStNum(); i++) {
-            if (MIMath.doubleEquals(data[i][2], missingValue)) {
+            v = this.getData(i);
+            if (MIMath.doubleEquals(v, missingValue)) {
                 continue;
             }
 
             if (vdNum == 0) {
-                min = data[i][2];
+                min = v;
                 idx = i;
             } else {
-                if (min > data[i][2]) {
-                    min = data[i][2];
+                if (min > v) {
+                    min = v;
                     idx = i;
                 }
             }
@@ -1447,17 +1422,19 @@ public class StationData {
         double max = 0;
         int vdNum = 0;
         int idx = 0;
+        double v;
         for (int i = 0; i < this.getStNum(); i++) {
-            if (MIMath.doubleEquals(data[i][2], missingValue)) {
+            v = this.getData(i);
+            if (MIMath.doubleEquals(v, missingValue)) {
                 continue;
             }
 
             if (vdNum == 0) {
-                max = data[i][2];
+                max = v;
                 idx = i;
             } else {
-                if (max < data[i][2]) {
-                    max = data[i][2];
+                if (max < v) {
+                    max = v;
                     idx = i;
                 }
             }
@@ -1477,22 +1454,24 @@ public class StationData {
         double max = 0;
         double min = 0;
         int vdNum = 0;
+        double v;
         boolean hasMissingValue = false;
         for (int i = 0; i < this.getStNum(); i++) {
-            if (MIMath.doubleEquals(data[i][2], missingValue)) {
+            v = this.getData(i);
+            if (MIMath.doubleEquals(v, missingValue)) {
                 hasMissingValue = true;
                 continue;
             }
 
             if (vdNum == 0) {
-                max = data[i][2];
+                max = v;
                 min = max;
             } else {
-                if (max < data[i][2]) {
-                    max = data[i][2];
+                if (max < v) {
+                    max = v;
                 }
-                if (min > data[i][2]) {
-                    min = data[i][2];
+                if (min > v) {
+                    min = v;
                 }
             }
             vdNum += 1;
@@ -1513,7 +1492,7 @@ public class StationData {
         int vdNum = 0;
         double v;
         for (int i = 0; i < this.getStNum(); i++) {
-            v = this.getValue(i);
+            v = this.getData(i);
             if (MIMath.doubleEquals(v, missingValue)) {
                 continue;
             }
@@ -1536,7 +1515,7 @@ public class StationData {
         double sum = 0;
         double v;
         for (int i = 0; i < this.getStNum(); i++) {
-            v = this.getValue(i);
+            v = this.getData(i);
             if (MIMath.doubleEquals(v, missingValue)) {
                 continue;
             }

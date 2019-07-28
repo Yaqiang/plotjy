@@ -514,6 +514,91 @@ public class DrawMeteoData {
 
         return aLayer;
     }
+    
+    /**
+     * Create contour layer
+     *
+     * @param gridData Grid data
+     * @param aLS Legend scheme
+     * @param lName Layer name
+     * @param fieldName Field name
+     * @param isSmooth If smooth the contour lines
+     * @return Vector layer
+     */
+    public static VectorLayer createContourLayer(GridArray gridData, LegendScheme aLS, String lName, String fieldName, boolean isSmooth) {
+        LegendScheme ls = aLS.convertTo(ShapeTypes.Polyline);
+        Object[] ccs = LegendManage.getContoursAndColors(ls);
+        double[] cValues = (double[]) ccs[0];
+
+        int[][] S1 = new int[gridData.getYNum()][gridData.getXNum()];
+        Object[] cbs = ContourDraw.tracingContourLines(gridData.getData(),
+                cValues, gridData.xArray, gridData.yArray, gridData.missingValue, S1);
+        List<wcontour.global.PolyLine> ContourLines = (List<wcontour.global.PolyLine>) cbs[0];
+
+        if (ContourLines.isEmpty()) {
+            return null;
+        }
+
+        if (isSmooth) {
+            ContourLines = wcontour.Contour.smoothLines(ContourLines);
+        }
+
+        wcontour.global.PolyLine aLine;
+        double aValue;
+        VectorLayer aLayer = new VectorLayer(ShapeTypes.Polyline);
+        Field aDC = new Field(fieldName, DataType.DOUBLE);
+        aLayer.editAddField(aDC);
+
+        for (int i = 0; i < ContourLines.size(); i++) {
+            aLine = ContourLines.get(i);
+            aValue = aLine.Value;
+
+            PolylineShape aPolyline = new PolylineShape();
+            PointD aPoint;
+            List<PointD> pList = new ArrayList<>();
+            for (int j = 0; j < aLine.PointList.size(); j++) {
+                aPoint = new PointD();
+                aPoint.X = aLine.PointList.get(j).X;
+                aPoint.Y = aLine.PointList.get(j).Y;
+                pList.add(aPoint);
+            }
+            aPolyline.setPoints(pList);
+            aPolyline.setValue(aValue);
+            aPolyline.setExtent(MIMath.getPointsExtent(pList));
+
+            int shapeNum = aLayer.getShapeNum();
+            try {
+                if (aLayer.editInsertShape(aPolyline, shapeNum)) {
+                    aLayer.editCellValue(fieldName, shapeNum, aValue);
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(DrawMeteoData.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        aLayer.setLayerName(lName);
+        ls.setFieldName(fieldName);
+        aLayer.setLegendScheme(ls);
+        aLayer.setLayerDrawType(LayerDrawType.Contour);
+
+        aLayer.getLabelSet().setDrawLabels(true);
+        aLayer.getLabelSet().setDrawShadow(true);
+        aLayer.getLabelSet().setShadowColor(Color.white);
+        aLayer.getLabelSet().setYOffset(3);
+        aLayer.getLabelSet().setFieldName(fieldName);
+        aLayer.getLabelSet().setColorByLegend(true);
+        aLayer.getLabelSet().setDynamicContourLabel(true);
+        //aLayer.getLabelSet().setAutoDecimal(false);
+        int decimaln = MIMath.getDecimalNum(cValues[0]);
+        if (cValues.length > 1) {
+            int decimaln2 = MIMath.getDecimalNum(cValues[1] - cValues[0]);
+            decimaln = Math.max(decimaln, decimaln2);
+        }
+        aLayer.getLabelSet().setDecimalDigits(decimaln);
+        //aLayer.addLabels();
+
+        return aLayer;
+    }
 
     /**
      * Create contour layer
@@ -1729,22 +1814,22 @@ public class DrawMeteoData {
         aLayer.editAddField("Stid", DataType.STRING);
         aLayer.editAddField(fieldName, DataType.DOUBLE);
 
-        for (i = 0; i < stationData.data.length; i++) {
+        for (i = 0; i < stationData.getStNum(); i++) {
             aPoint = new PointD();
-            aPoint.X = stationData.data[i][0];
-            aPoint.Y = stationData.data[i][1];
+            aPoint.X = stationData.getX(i);
+            aPoint.Y = stationData.getY(i);
             if (Double.isNaN(aPoint.X)) {
                 continue;
             }
             PointShape aPointShape = new PointShape();
             aPointShape.setPoint(aPoint);
-            aPointShape.setValue(stationData.data[i][2]);
+            aPointShape.setValue(stationData.getData(i));
 
             int shapeNum = aLayer.getShapeNum();
             try {
                 if (aLayer.editInsertShape(aPointShape, shapeNum)) {
-                    aLayer.editCellValue("Stid", shapeNum, stationData.stations.get(i));
-                    aLayer.editCellValue(fieldName, shapeNum, stationData.data[i][2]);
+                    aLayer.editCellValue("Stid", shapeNum, stationData.getStid(i));
+                    aLayer.editCellValue(fieldName, shapeNum, stationData.getData(i));
                 }
             } catch (Exception ex) {
                 Logger.getLogger(DrawMeteoData.class.getName()).log(Level.SEVERE, null, ex);
@@ -1833,23 +1918,23 @@ public class DrawMeteoData {
         aLayer.editAddField("Stid", DataType.STRING);
         aLayer.editAddField(fieldName, DataType.DOUBLE);
 
-        for (i = 0; i < stationData.data.length; i++) {
+        for (i = 0; i < stationData.getStNum(); i++) {
             aPoint = new PointD();
-            aPoint.X = stationData.data[i][0];
-            aPoint.Y = stationData.data[i][1];
+            aPoint.X = stationData.getX(i);
+            aPoint.Y = stationData.getY(i);
             if (Double.isNaN(aPoint.X)) {
                 continue;
             }
             PointShape aPointShape = new PointShape();
             aPointShape.setPoint(aPoint);
-            aPointShape.setValue(stationData.data[i][2]);
+            aPointShape.setValue(stationData.getData(i));
 
             int shapeNum = aLayer.getShapeNum();
             try {
                 if (aLayer.editInsertShape(aPointShape, shapeNum)) {
                     aLayer.editCellValue("ID", shapeNum, i);
-                    aLayer.editCellValue("Stid", shapeNum, stationData.stations.get(i));
-                    aLayer.editCellValue(fieldName, shapeNum, stationData.data[i][2]);
+                    aLayer.editCellValue("Stid", shapeNum, stationData.getStid(i));
+                    aLayer.editCellValue(fieldName, shapeNum, stationData.getData());
                 }
             } catch (Exception ex) {
                 Logger.getLogger(DrawMeteoData.class.getName()).log(Level.SEVERE, null, ex);
@@ -2009,32 +2094,32 @@ public class DrawMeteoData {
         }
 
         for (i = 0; i < windDirData.getStNum(); i++) {
-            windDir = (float) windDirData.data[i][2];
-            windSpeed = (float) windSpeedData.data[i][2];
+            windDir = (float) windDirData.getData(i);
+            windSpeed = (float) windSpeedData.getData(i);
             if (!MIMath.doubleEquals(windDir, windDirData.missingValue)) {
                 if (!MIMath.doubleEquals(windSpeed, windSpeedData.missingValue)) {
                     aPoint = new PointD();
-                    aPoint.X = windDirData.data[i][0];
-                    aPoint.Y = windDirData.data[i][1];
+                    aPoint.X = windDirData.getX(i);
+                    aPoint.Y = windDirData.getY(i);
 
                     WindArrow aArraw = new WindArrow();
                     aArraw.angle = windDir;
                     aArraw.length = windSpeed;
                     aArraw.size = 6;
                     aArraw.setPoint(aPoint);
-                    aArraw.setValue(stData.data[i][2]);
+                    aArraw.setValue(stData.getData(i));
 
                     int shapeNum = aLayer.getShapeNum();
                     try {
                         if (aLayer.editInsertShape(aArraw, shapeNum)) {
                             if (isUV) {
-                                aLayer.editCellValue("U", shapeNum, uData.data[i][2]);
-                                aLayer.editCellValue("V", shapeNum, vData.data[i][2]);
+                                aLayer.editCellValue("U", shapeNum, uData.getData(i));
+                                aLayer.editCellValue("V", shapeNum, vData.getData(i));
                             }
                             aLayer.editCellValue("WindDirection", shapeNum, windDir);
                             aLayer.editCellValue("WindSpeed", shapeNum, windSpeed);
                             if (ifAdd) {
-                                aLayer.editCellValue(columnName, shapeNum, stData.data[i][2]);
+                                aLayer.editCellValue(columnName, shapeNum, stData.getData(i));
                             }
                         }
                     } catch (Exception ex) {
@@ -2293,13 +2378,13 @@ public class DrawMeteoData {
         aLayer.editAddField("WindSpeed", DataType.FLOAT);
 
         for (i = 0; i < windDirData.getStNum(); i++) {
-            windDir = (float) windDirData.data[i][2];
-            windSpeed = (float) windSpeedData.data[i][2];
+            windDir = (float) windDirData.getData(i);
+            windSpeed = (float) windSpeedData.getData(i);
             if (!MIMath.doubleEquals(windDir, windDirData.missingValue)) {
                 if (!MIMath.doubleEquals(windSpeed, windSpeedData.missingValue)) {
                     aPoint = new PointD();
-                    aPoint.X = windDirData.data[i][0];
-                    aPoint.Y = windDirData.data[i][1];
+                    aPoint.X = windDirData.getX(i);
+                    aPoint.Y = windDirData.getY(i);
 
                     WindArrow aArraw = new WindArrow();
                     aArraw.angle = windDir;
@@ -2311,8 +2396,8 @@ public class DrawMeteoData {
                     try {
                         if (aLayer.editInsertShape(aArraw, shapeNum)) {
                             if (isUV) {
-                                aLayer.editCellValue("U", shapeNum, uData.data[i][2]);
-                                aLayer.editCellValue("V", shapeNum, vData.data[i][2]);
+                                aLayer.editCellValue("U", shapeNum, uData.getData(i));
+                                aLayer.editCellValue("V", shapeNum, vData.getData(i));
                             }
                             aLayer.editCellValue("WindDirection", shapeNum, windDir);
                             aLayer.editCellValue("WindSpeed", shapeNum, windSpeed);
@@ -2407,8 +2492,8 @@ public class DrawMeteoData {
         }
 
         for (i = 0; i < windDirData.getStNum(); i++) {
-            windDir = (float) windDirData.data[i][2];
-            windSpeed = (float) windSpeedData.data[i][2];
+            windDir = (float) windDirData.getData(i);
+            windSpeed = (float) windSpeedData.getData(i);
             if (windSpeed == 0) {
                 continue;
             }
@@ -2416,22 +2501,22 @@ public class DrawMeteoData {
             if (!MIMath.doubleEquals(windDir, windDirData.missingValue)) {
                 if (!MIMath.doubleEquals(windSpeed, windSpeedData.missingValue)) {
                     aPoint = new PointD();
-                    aPoint.X = windDirData.data[i][0];
-                    aPoint.Y = windDirData.data[i][1];
+                    aPoint.X = windDirData.getX(i);
+                    aPoint.Y = windDirData.getY(i);
                     WindBarb aWB = Draw.calWindBarb(windDir, windSpeed, 0, 10, aPoint);
-                    aWB.setValue(stData.data[i][2]);
+                    aWB.setValue(stData.getData(i));
 
                     int shapeNum = aLayer.getShapeNum();
                     try {
                         if (aLayer.editInsertShape(aWB, shapeNum)) {
                             if (isUV) {
-                                aLayer.editCellValue("U", shapeNum, uData.data[i][2]);
-                                aLayer.editCellValue("V", shapeNum, vData.data[i][2]);
+                                aLayer.editCellValue("U", shapeNum, uData.getData(i));
+                                aLayer.editCellValue("V", shapeNum, vData.getData(i));
                             }
                             aLayer.editCellValue("WindDirection", shapeNum, windDir);
                             aLayer.editCellValue("WindSpeed", shapeNum, windSpeed);
                             if (ifAdd) {
-                                aLayer.editCellValue(columnName, shapeNum, stData.data[i][2]);
+                                aLayer.editCellValue(columnName, shapeNum, stData.getData(i));
                             }
                         }
                     } catch (Exception ex) {
@@ -2511,8 +2596,8 @@ public class DrawMeteoData {
         aLayer.editAddField("WindSpeed", DataType.FLOAT);
 
         for (i = 0; i < windDirData.getStNum(); i++) {
-            windDir = (float) windDirData.data[i][2];
-            windSpeed = (float) windSpeedData.data[i][2];
+            windDir = (float) windDirData.getData(i);
+            windSpeed = (float) windSpeedData.getData(i);
             if (windSpeed == 0) {
                 continue;
             }
@@ -2520,16 +2605,16 @@ public class DrawMeteoData {
             if (!MIMath.doubleEquals(windDir, windDirData.missingValue)) {
                 if (!MIMath.doubleEquals(windSpeed, windSpeedData.missingValue)) {
                     aPoint = new PointD();
-                    aPoint.X = windDirData.data[i][0];
-                    aPoint.Y = windDirData.data[i][1];
+                    aPoint.X = windDirData.getX(i);
+                    aPoint.Y = windDirData.getY(i);
                     WindBarb aWB = Draw.calWindBarb(windDir, windSpeed, 0, 10, aPoint);
 
                     int shapeNum = aLayer.getShapeNum();
                     try {
                         if (aLayer.editInsertShape(aWB, shapeNum)) {
                             if (isUV) {
-                                aLayer.editCellValue("U", shapeNum, uData.data[i][2]);
-                                aLayer.editCellValue("V", shapeNum, vData.data[i][2]);
+                                aLayer.editCellValue("U", shapeNum, uData.getData(i));
+                                aLayer.editCellValue("V", shapeNum, vData.getData(i));
                             }
                             aLayer.editCellValue("WindDirection", shapeNum, windDir);
                             aLayer.editCellValue("WindSpeed", shapeNum, windSpeed);
@@ -2742,12 +2827,12 @@ public class DrawMeteoData {
         aLayer.editAddField(columnName, DataType.DOUBLE);
 
         for (i = 0; i < weatherData.getStNum(); i++) {
-            weather = (int) weatherData.data[i][2];
+            weather = (int) weatherData.getData(i);
             if (!(MIMath.doubleEquals(weather, weatherData.missingValue))) {
                 if (wList.contains(weather)) {
                     aPoint = new PointD();
-                    aPoint.X = weatherData.data[i][0];
-                    aPoint.Y = weatherData.data[i][1];
+                    aPoint.X = weatherData.getX(i);
+                    aPoint.Y = weatherData.getY(i);
                     PointShape aPS = new PointShape();
                     aPS.setPoint(aPoint);
                     aPS.setValue(weather);

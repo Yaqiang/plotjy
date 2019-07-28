@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import org.meteothink.global.MIMath;
 import java.util.Arrays;
 import java.util.List;
+import org.meteothink.ndarray.Array;
+import org.meteothink.ndarray.DataType;
 import org.meteothink.table.ColumnData;
 
 /**
@@ -121,10 +123,10 @@ public abstract class DataMath {
         StationData cStData = new StationData();
         String aStid;
         double x, y;
-        for (int i = 0; i < stData.stations.size(); i++) {
-            aStid = stData.stations.get(i);
+        for (int i = 0; i < stData.getStNum(); i++) {
+            aStid = stData.getStid(i);
 
-            double aValue = stData.getValue(i);
+            double aValue = stData.getData(i);
             x = stData.getX(i);
             y = stData.getY(i);
             if (MIMath.doubleEquals(aValue, stData.missingValue)) {
@@ -233,10 +235,10 @@ public abstract class DataMath {
         StationData cStData = new StationData();
         String aStid;
         double x, y;
-        for (int i = 0; i < stData.stations.size(); i++) {
-            aStid = stData.stations.get(i);
+        for (int i = 0; i < stData.getStNum(); i++) {
+            aStid = stData.getStid(i);
 
-            double aValue = stData.getValue(i);
+            double aValue = stData.getData(i);
             x = stData.getX(i);
             y = stData.getY(i);
             if (aValue == 0 || MIMath.doubleEquals(aValue, stData.missingValue)) {
@@ -311,14 +313,14 @@ public abstract class DataMath {
         StationData vData = new StationData(windSpeedData);
         double[] uv;
         for (int i = 0; i < windDirData.getStNum(); i++) {
-            if (MIMath.doubleEquals(windDirData.data[i][2], windDirData.missingValue)
-                    || MIMath.doubleEquals(windSpeedData.data[i][2], windSpeedData.missingValue)) {
-                uData.data[i][2] = uData.missingValue;
-                vData.data[i][2] = vData.missingValue;
+            if (MIMath.doubleEquals(windDirData.getData(i), windDirData.missingValue)
+                    || MIMath.doubleEquals(windSpeedData.getData(i), windSpeedData.missingValue)) {
+                uData.setData(i, uData.missingValue);
+                vData.setData(i, vData.missingValue);
             } else {
-                uv = getUVFromDS(windDirData.data[i][2], windSpeedData.data[i][2]);
-                uData.data[i][2] = uv[0];
-                vData.data[i][2] = uv[1];
+                uv = getUVFromDS(windDirData.getData(i), windSpeedData.getData(i));
+                uData.setData(i, uv[0]);
+                vData.setData(i, uv[1]);
             }
         }
         return new StationData[]{uData, vData};
@@ -394,14 +396,14 @@ public abstract class DataMath {
         StationData windSpeedData = new StationData(vData);
         double[] ds;
         for (int i = 0; i < windDirData.getStNum(); i++) {
-            if (MIMath.doubleEquals(uData.data[i][2], uData.missingValue)
-                    || MIMath.doubleEquals(vData.data[i][2], vData.missingValue)) {
-                windDirData.data[i][2] = windDirData.missingValue;
-                windSpeedData.data[i][2] = windSpeedData.missingValue;
+            if (MIMath.doubleEquals(uData.getData(i), uData.missingValue)
+                    || MIMath.doubleEquals(vData.getData(i), vData.missingValue)) {
+                windDirData.setData(i, windDirData.missingValue);
+                windSpeedData.setData(i, windSpeedData.missingValue);
             } else {
-                ds = getDSFromUV(uData.data[i][2], vData.data[i][2]);
-                windDirData.data[i][2] = ds[0];
-                windSpeedData.data[i][2] = ds[1];
+                ds = getDSFromUV(uData.getData(i), vData.getData(i));
+                windDirData.setData(i, ds[0]);
+                windSpeedData.setData(i, ds[1]);
             }
         }
 
@@ -758,13 +760,13 @@ public abstract class DataMath {
         String aStid;
         int stIdx;
         double x, y;
-        for (int i = 0; i < stdata.stations.size(); i++) {
-            aStid = stdata.stations.get(i);
+        for (int i = 0; i < stdata.getStNum(); i++) {
+            aStid = stdata.getStid(i);
             if (aStid.equals("99999")) {
                 continue;
             }
 
-            double aValue = stdata.getValue(i);
+            double aValue = stdata.getData(i);
             if (aValue == stdata.missingValue) {
                 continue;
             }
@@ -772,9 +774,9 @@ public abstract class DataMath {
             int n = 1;
             for (int j = 1; j < datalist.size(); j++) {
                 StationData sd = datalist.get(j);
-                stIdx = sd.stations.indexOf(aStid);
+                stIdx = sd.indexOf(aStid);
                 if (stIdx >= 0) {
-                    double bValue = sd.getValue(stIdx);
+                    double bValue = sd.getData(stIdx);
                     if (bValue == sd.missingValue) {
                         continue;
                     }
@@ -1053,41 +1055,41 @@ public abstract class DataMath {
             return null;
         }
 
-        StationData cStData = new StationData();
         List<double[]> cData = new ArrayList<>();
         String aStid;
+        List<String> stids = new ArrayList<>();
         int stIdx = -1;
         double minX, maxX, minY, maxY;
         minX = 0;
         maxX = 0;
         minY = 0;
         maxY = 0;
-        for (int i = 0; i < uData.stations.size(); i++) {
-            aStid = uData.stations.get(i);
+        for (int i = 0; i < uData.getStNum(); i++) {
+            aStid = uData.getStid(i);
             if (aStid.equals("99999")) {
                 continue;
             }
 
-            double aValue = uData.data[2][i];
+            double aValue = uData.getData(i);
             if (aValue == uData.missingValue) {
                 continue;
             }
 
-            stIdx = vData.stations.indexOf(aStid);
+            stIdx = vData.indexOf(aStid);
             if (stIdx >= 0) {
-                double bValue = vData.data[2][stIdx];
+                double bValue = vData.getData(stIdx);
                 if (bValue == vData.missingValue) {
                     continue;
                 }
 
-                cStData.stations.add(aStid);
+                stids.add(aStid);
                 double[] theData = new double[3];
-                theData[0] = uData.data[0][i];
-                theData[1] = uData.data[1][i];
+                theData[0] = uData.getX(i);
+                theData[1] = uData.getY(i);
                 theData[2] = Math.sqrt(aValue * aValue + bValue * bValue);
                 cData.add(theData);
 
-                if (cStData.stations.size() == 1) {
+                if (stids.isEmpty()) {
                     minX = theData[0];
                     maxX = minX;
                     minY = theData[1];
@@ -1105,17 +1107,19 @@ public abstract class DataMath {
                     }
                 }
             }
+        }        
+        int n = cData.size();
+        StationData cStData = new StationData(n);
+        for (int i = 0; i < cData.size(); i++) {
+            cStData.setX(i, cData.get(i)[0]);
+            cStData.setY(i, cData.get(i)[1]);
+            cStData.setData(i, cData.get(i)[2]);
+            cStData.setStid(i, stids.get(i));
         }
         cStData.dataExtent.minX = minX;
         cStData.dataExtent.maxX = maxX;
         cStData.dataExtent.minY = minY;
         cStData.dataExtent.maxY = maxY;
-        cStData.data = new double[3][cData.size()];
-        for (int i = 0; i < cData.size(); i++) {
-            cStData.data[0][i] = cData.get(i)[0];
-            cStData.data[1][i] = cData.get(i)[1];
-            cStData.data[2][i] = cData.get(i)[2];
-        }
 
         return cStData;
     }

@@ -13,6 +13,7 @@
  */
 package org.meteothink.layer;
 
+import com.l2fprod.common.beans.BaseBeanInfo;
 import org.meteothink.data.mapdata.AttributeTable;
 import org.meteothink.data.mapdata.Field;
 import org.meteothink.data.mapdata.ShapeFileManage;
@@ -3133,6 +3134,6 @@ public class VectorLayer extends MapLayer {
 
         return str;
     }
-    // </editor-fold>
+    // </editor-fold>    
     // </editor-fold>
 }

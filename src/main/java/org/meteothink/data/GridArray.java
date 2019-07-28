@@ -41,6 +41,7 @@ import org.meteothink.projection.ProjectionUtil;
 import org.meteothink.projection.Reproject;
 import org.meteothink.ndarray.Array;
 import org.meteothink.ndarray.DataType;
+import org.meteothink.ndarray.DimArray;
 import org.meteothink.ndarray.InvalidRangeException;
 
 /**
@@ -95,6 +96,17 @@ public class GridArray {
         missingValue = aGridData.missingValue;
         data = Array.factory(aGridData.data.getDataType(), aGridData.data.getShape());
         Array.arraycopy(aGridData.data, 0, data, 0, (int) aGridData.data.getSize());
+    }
+    
+    /**
+     * Constructor
+     * @param a DimArray
+     */
+    public GridArray(DimArray a) {
+        this();
+        this.xArray = a.getDimension(1).getValues();
+        this.yArray = a.getDimension(0).getValues();
+        this.data = a.getArray();
     }
 
     /**
@@ -286,6 +298,14 @@ public class GridArray {
      */
     public void setYStagger(boolean value) {
         _yStag = value;
+    }
+    
+    /**
+     * Get data array
+     * @return data array
+     */
+    public double[][] getData() {
+        return (double[][])ArrayUtil.copyToNDJavaArray_Double(data);
     }
 
     /**
@@ -964,6 +984,21 @@ public class GridArray {
         }
 
         sw.close();
+    }
+    
+    /**
+     * Convert to GridData object
+     *
+     * @return GridData object
+     */
+    public GridData toGridData() {
+        GridData r = new GridData();
+        r.data = (double[][])ArrayUtil.copyToNDJavaArray_Double(data);
+        r.xArray = this.xArray;
+        r.yArray = this.yArray;
+        r.projInfo = this.projInfo;
+        r.missingValue = this.missingValue;
+        return r;
     }
 
     /**

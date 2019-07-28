@@ -649,7 +649,7 @@ public class GridData {
         nstData.missingValue = this.missingValue;
         if (this.projInfo.equals(stData.projInfo)) {
             for (int i = 0; i < nstData.getStNum(); i++) {
-                nstData.setValue(i, this.toStation(nstData.getX(i), nstData.getY(i)));
+                nstData.setData(i, this.toStation(nstData.getX(i), nstData.getY(i)));
             }
         } else {
             nstData = this.project(projInfo, stData.projInfo, stData, ResampleMethods.Bilinear);
@@ -688,7 +688,7 @@ public class GridData {
             }
             sdata = this.project(projInfo, sdata.projInfo, sdata, ResampleMethods.Bilinear);
             for (int i = 0; i < stData.getRowCount(); i++) {
-                stData.setValue(i, fieldName, sdata.getValue(i));
+                stData.setValue(i, fieldName, sdata.getData(i));
             }
         }
     }
@@ -2934,14 +2934,14 @@ public class GridData {
                 y = points[0][1];
 
                 if (x < xArray[0] || x > xArray[xArray.length - 1]) {
-                    nsData.setValue(i, missingValue);
+                    nsData.setData(i, missingValue);
                 } else if (y < yArray[0] || y > yArray[yArray.length - 1]) {
-                    nsData.setValue(i, missingValue);
+                    nsData.setData(i, missingValue);
                 } else {
-                    nsData.setValue(i, this.toStation(x, y));
+                    nsData.setData(i, this.toStation(x, y));
                 }
             } catch (Exception e) {
-                nsData.setValue(i, missingValue);
+                nsData.setData(i, missingValue);
                 i++;
             }
         }

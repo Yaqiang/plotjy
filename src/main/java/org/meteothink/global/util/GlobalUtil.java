@@ -57,14 +57,6 @@ public class GlobalUtil {
     // <editor-fold desc="Get Set Methods">
     // </editor-fold>
     // <editor-fold desc="Methods">
-    
-    /**
-     * Get software version
-     * @return Software version
-     */
-    public static String getVersion(){
-        return "1.7.6";
-    }
 
     /**
      * Get file extension
@@ -136,68 +128,7 @@ public class GlobalUtil {
 
         return subDirs;
     }
-
-    /**
-     * Get class names in a jar file
-     *
-     * @param jarFileName The jar file name
-     * @return The class names in the jar file
-     * @throws FileNotFoundException
-     * @throws IOException
-     */
-    public static List<String> getClassNames(String jarFileName) throws FileNotFoundException, IOException {
-        List<String> classNames = new ArrayList<>();
-        ZipInputStream zip = new ZipInputStream(new FileInputStream(jarFileName));
-        for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
-            if (entry.getName().endsWith(".class") && !entry.isDirectory()) {
-                // This ZipEntry represents a class. Now, what class does it represent?
-                StringBuilder className = new StringBuilder();
-                for (String part : entry.getName().split("/")) {
-                    if (className.length() != 0) {
-                        className.append(".");
-                    }
-                    className.append(part);
-                    if (part.endsWith(".class")) {
-                        className.setLength(className.length() - ".class".length());
-                    }
-                }
-                classNames.add(className.toString());
-            }
-        }
-
-        return classNames;
-    }
-
-    /**
-     * Get the class name which implements IPlugin interface
-     *
-     * @param jarFileName The jar file name
-     * @return The class name which implements IPlugin interface
-     */
-    public static String getPluginClassName(String jarFileName) {
-        String pluginClassName = null;
-        try {
-            List<String> classNames = getClassNames(jarFileName);
-            URL url = new URL("file:" + jarFileName);
-            URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{url});
-            for (String name : classNames) {
-                Class<?> clazz = urlClassLoader.loadClass(name);
-                if (isInterface(clazz, "org.meteoinfo.plugin.IPlugin")) {
-                    pluginClassName = name;
-                    break;
-                }
-            }
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(GlobalUtil.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(GlobalUtil.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(GlobalUtil.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        return pluginClassName;
-    }
-
+    
     /**
      * Given a package name, attempts to reflect to find all classes within the
      * package on the local file system.
@@ -278,36 +209,7 @@ public class GlobalUtil {
             System.out.println(packageName + " does not appear to exist as a valid package on the file system.");
         }
         return fns;
-    }
-
-    /**
-     * Determine if a class implements a interface
-     *
-     * @param c The class
-     * @param szInterface The interface name
-     * @return Boolean
-     */
-    public static boolean isInterface(Class c, String szInterface) {
-        Class[] face = c.getInterfaces();
-        for (int i = 0, j = face.length; i < j; i++) {
-            if (face[i].getName().equals(szInterface)) {
-                return true;
-            } else {
-                Class[] face1 = face[i].getInterfaces();
-                for (int x = 0; x < face1.length; x++) {
-                    if (face1[x].getName().equals(szInterface)) {
-                        return true;
-                    } else if (isInterface(face1[x], szInterface)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        if (null != c.getSuperclass()) {
-            return isInterface(c.getSuperclass(), szInterface);
-        }
-        return false;
-    }
+    }    
 
     /**
      * Get root path

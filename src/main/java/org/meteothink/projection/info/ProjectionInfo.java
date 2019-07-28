@@ -29,7 +29,6 @@ import org.locationtech.proj4j.datum.Ellipsoid;
 import org.locationtech.proj4j.parser.Proj4Keyword;
 import org.locationtech.proj4j.parser.Proj4Parser;
 import org.locationtech.proj4j.proj.Projection;
-import org.meteothink.common.projection.KnownCoordinateSystems;
 import org.meteothink.shape.PolygonShape;
 import org.meteothink.ndarray.Array;
 import org.meteothink.common.projection.ProjRegistry;
